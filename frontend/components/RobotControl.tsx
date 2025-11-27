@@ -15,7 +15,9 @@ import {
   RotateCw,
   Hand,
   Pointer,
-  Armchair
+  Armchair,
+  Gauge,
+  Compass
 } from 'lucide-react'
 
 const CAMERA_FEED_URL = (process.env.NEXT_PUBLIC_CAMERA_FEED_URL || '').trim()
@@ -26,6 +28,10 @@ interface RobotStatus {
   is_moving: boolean
   head_position?: { yaw: number; pitch: number }
   motor_positions?: Record<string, number>
+  imu?: {
+    accelerometer: { x: number; y: number; z: number }
+    gyroscope: { x: number; y: number; z: number }
+  }
 }
 
 interface CommandLogEntry {
@@ -35,6 +41,9 @@ interface CommandLogEntry {
 
 const formatAngle = (value?: number) =>
   typeof value === 'number' ? value.toFixed(2) : '0.00'
+
+const formatImuValue = (value?: number) =>
+  typeof value === 'number' ? value.toFixed(3) : '0.000'
 
 export default function RobotControl() {
   const [status, setStatus] = useState<RobotStatus>({
@@ -188,6 +197,53 @@ export default function RobotControl() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
+          <p className="text-sm font-semibold mb-4">IMU Sensors</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="h-5 w-5 text-blue-400" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">Accelerometer</p>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">X-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.accelerometer.x)} m/s²</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Y-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.accelerometer.y)} m/s²</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Z-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.accelerometer.z)} m/s²</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Compass className="h-5 w-5 text-purple-400" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-purple-300">Gyroscope</p>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">X-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.gyroscope.x)} rad/s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Y-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.gyroscope.y)} rad/s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Z-axis:</span>
+                  <span className="font-mono text-slate-200">{formatImuValue(status.imu?.gyroscope.z)} rad/s</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

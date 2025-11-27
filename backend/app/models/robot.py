@@ -65,9 +65,17 @@ class BatchMotorCommand(BaseModel):
     motors: Dict[str, float]  # motor_name: position
 
 
+class IMUData(BaseModel):
+    """IMU sensor data"""
+    accelerometer: Dict[str, float]  # x, y, z in m/s²
+    gyroscope: Dict[str, float]      # x, y, z in rad/s
+
+
 class RobotStatus(BaseModel):
     """Robot status response"""
     connected: bool
+    is_moving: bool = False
     current_gesture: Optional[str] = None
+    head_position: Optional[Dict[str, float]] = None
     motor_positions: Optional[Dict[str, float]] = None
-    sensor_data: Optional[Dict[str, float]] = None
+    imu: Optional[IMUData] = None

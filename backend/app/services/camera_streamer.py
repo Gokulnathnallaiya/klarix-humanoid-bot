@@ -1,6 +1,6 @@
 """Camera streaming service - MJPEG stream for robot camera"""
 import asyncio
-from typing import Optional
+from typing import Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class CameraStreamer:
     def __init__(self):
         self.current_frame: Optional[bytes] = None
         self.frame_lock = asyncio.Lock()
-        self.subscribers = []
+        self.subscribers: List[asyncio.Queue] = []
 
     async def update_frame(self, frame_data: bytes):
         """Update the current frame"""

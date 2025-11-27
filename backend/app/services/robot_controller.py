@@ -146,7 +146,11 @@ class RobotController:
             "current_gesture": self.current_state.get("gesture"),
             "head_position": self.current_state.get("head_position"),
             "is_moving": self.current_state.get("is_moving"),
-            "motor_positions": self.current_state.get("motor_positions")
+            "motor_positions": self.current_state.get("motor_positions"),
+            "imu": self.current_state.get("imu", {
+                "accelerometer": {"x": 0, "y": 0, "z": 0},
+                "gyroscope": {"x": 0, "y": 0, "z": 0}
+            })
         }
 
     async def subscribe(self) -> asyncio.Queue:
