@@ -94,52 +94,90 @@ def init_devices():
 # Gesture functions
 def standing_pose(motors):
     """Set stable standing position"""
-    motors['LShoulderPitch'].setPosition(1.57)
-    motors['RShoulderPitch'].setPosition(1.57)
-    motors['LShoulderRoll'].setPosition(0.2)
-    motors['RShoulderRoll'].setPosition(-0.2)
-    motors['LElbowRoll'].setPosition(-0.5)
-    motors['RElbowRoll'].setPosition(0.5)
+    if not motors:
+        return
+    if 'LShoulderPitch' in motors:
+        motors['LShoulderPitch'].setPosition(1.57)
+    if 'RShoulderPitch' in motors:
+        motors['RShoulderPitch'].setPosition(1.57)
+    if 'LShoulderRoll' in motors:
+        motors['LShoulderRoll'].setPosition(0.2)
+    if 'RShoulderRoll' in motors:
+        motors['RShoulderRoll'].setPosition(-0.2)
+    if 'LElbowRoll' in motors:
+        motors['LElbowRoll'].setPosition(-0.5)
+    if 'RElbowRoll' in motors:
+        motors['RElbowRoll'].setPosition(0.5)
 
-    motors['LHipPitch'].setPosition(-0.05)
-    motors['RHipPitch'].setPosition(-0.05)
-    motors['LKneePitch'].setPosition(0.1)
-    motors['RKneePitch'].setPosition(0.1)
-    motors['LAnklePitch'].setPosition(-0.05)
-    motors['RAnklePitch'].setPosition(-0.05)
+    if 'LHipPitch' in motors:
+        motors['LHipPitch'].setPosition(-0.05)
+    if 'RHipPitch' in motors:
+        motors['RHipPitch'].setPosition(-0.05)
+    if 'LKneePitch' in motors:
+        motors['LKneePitch'].setPosition(0.1)
+    if 'RKneePitch' in motors:
+        motors['RKneePitch'].setPosition(0.1)
+    if 'LAnklePitch' in motors:
+        motors['LAnklePitch'].setPosition(-0.05)
+    if 'RAnklePitch' in motors:
+        motors['RAnklePitch'].setPosition(-0.05)
 
-    motors['HeadYaw'].setPosition(0.0)
-    motors['HeadPitch'].setPosition(0.0)
+    if 'HeadYaw' in motors:
+        motors['HeadYaw'].setPosition(0.0)
+    if 'HeadPitch' in motors:
+        motors['HeadPitch'].setPosition(0.0)
 
 def wave_gesture(motors):
     """Wave right hand"""
-    motors['RShoulderPitch'].setPosition(0.0)
-    motors['RShoulderRoll'].setPosition(-0.3)
-    motors['RElbowRoll'].setPosition(1.5)
-    motors['RElbowYaw'].setPosition(1.2)
+    if not motors:
+        return
+    if 'RShoulderPitch' in motors:
+        motors['RShoulderPitch'].setPosition(0.0)
+    if 'RShoulderRoll' in motors:
+        motors['RShoulderRoll'].setPosition(-0.3)
+    if 'RElbowRoll' in motors:
+        motors['RElbowRoll'].setPosition(1.5)
+    if 'RElbowYaw' in motors:
+        motors['RElbowYaw'].setPosition(1.2)
 
 def point_gesture(motors):
     """Point forward with right arm"""
-    motors['RShoulderPitch'].setPosition(0.5)
-    motors['RShoulderRoll'].setPosition(-0.2)
-    motors['RElbowRoll'].setPosition(0.0)
-    motors['RElbowYaw'].setPosition(1.2)
+    if not motors:
+        return
+    if 'RShoulderPitch' in motors:
+        motors['RShoulderPitch'].setPosition(0.5)
+    if 'RShoulderRoll' in motors:
+        motors['RShoulderRoll'].setPosition(-0.2)
+    if 'RElbowRoll' in motors:
+        motors['RElbowRoll'].setPosition(0.0)
+    if 'RElbowYaw' in motors:
+        motors['RElbowYaw'].setPosition(1.2)
 
 def look_direction(motors, direction):
     """Look in a specific direction"""
+    if not motors:
+        return
     if direction == 'left':
-        motors['HeadYaw'].setPosition(0.8)
+        if 'HeadYaw' in motors:
+            motors['HeadYaw'].setPosition(0.8)
     elif direction == 'right':
-        motors['HeadYaw'].setPosition(-0.8)
+        if 'HeadYaw' in motors:
+            motors['HeadYaw'].setPosition(-0.8)
     elif direction == 'up':
-        motors['HeadYaw'].setPosition(0.0)
-        motors['HeadPitch'].setPosition(-0.3)
+        if 'HeadYaw' in motors:
+            motors['HeadYaw'].setPosition(0.0)
+        if 'HeadPitch' in motors:
+            motors['HeadPitch'].setPosition(-0.3)
     elif direction == 'down':
-        motors['HeadYaw'].setPosition(0.0)
-        motors['HeadPitch'].setPosition(0.3)
+        if 'HeadYaw' in motors:
+            motors['HeadYaw'].setPosition(0.0)
+        if 'HeadPitch' in motors:
+            motors['HeadPitch'].setPosition(0.3)
     else:
-        motors['HeadYaw'].setPosition(0.0)
-        motors['HeadPitch'].setPosition(0.0)
+        if 'HeadYaw' in motors:
+            motors['HeadYaw'].setPosition(0.0)
+        if 'HeadPitch' in motors:
+            motors['HeadPitch'].setPosition(0.0)
 
 # Intelligent Command Controller
 class IntelligentController:

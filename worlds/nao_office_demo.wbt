@@ -12,7 +12,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/drinks/protos/Can.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/plants/protos/PottedTree.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/humans/pedestrian/protos/Pedestrian.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/office_furniture/protos/OfficeTelephone.proto"
+# EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/office_furniture/protos/OfficeTelephone.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/CardboardBox.proto"
 
 WorldInfo {
@@ -133,10 +133,7 @@ Keyboard {
   rotation 0 0 1 1.5708
 }
 
-OfficeTelephone {
-  translation 3.3 2.5 0.75
-  rotation 0 0 1 1.5708
-}
+# OfficeTelephone removed - download issue
 
 # Work Area 2 - Second Desk
 Table {
@@ -412,110 +409,14 @@ Pedestrian {
   skinColor 0.9 0.7 0.6
 }
 
-# NAO Robot with Distance Sensors
-DEF NAO_ROBOT Robot {
+# NAO Robot
+Nao {
   translation 0 0 0.334
   rotation 0 0 1 0
-  children [
-    # Distance Sensor - Front
-    DistanceSensor {
-      translation 0.05 0 0.28
-      rotation 0 0 1 0
-      children [
-        DEF SENSOR_SHAPE Shape {
-          appearance PBRAppearance {
-            baseColor 1 0 0
-            emissiveColor 1 0 0
-          }
-          geometry Box {
-            size 0.01 0.01 0.01
-          }
-        }
-      ]
-      name "distance_front"
-      lookupTable [
-        0 0 0
-        0.05 50 0
-        1.5 1500 0
-      ]
-      type "sonar"
-      numberOfRays 5
-    }
-    # Distance Sensor - Front Right
-    DistanceSensor {
-      translation 0.04 -0.04 0.28
-      rotation 0 0 1 -0.5236
-      children [
-        USE SENSOR_SHAPE
-      ]
-      name "distance_front_right"
-      lookupTable [
-        0 0 0
-        0.05 50 0
-        1.2 1200 0
-      ]
-      type "sonar"
-      numberOfRays 3
-    }
-    # Distance Sensor - Front Left
-    DistanceSensor {
-      translation 0.04 0.04 0.28
-      rotation 0 0 1 0.5236
-      children [
-        USE SENSOR_SHAPE
-      ]
-      name "distance_front_left"
-      lookupTable [
-        0 0 0
-        0.05 50 0
-        1.2 1200 0
-      ]
-      type "sonar"
-      numberOfRays 3
-    }
-    # Distance Sensor - Left
-    DistanceSensor {
-      translation 0 0.05 0.28
-      rotation 0 0 1 1.5708
-      children [
-        USE SENSOR_SHAPE
-      ]
-      name "distance_left"
-      lookupTable [
-        0 0 0
-        0.05 50 0
-        1 1000 0
-      ]
-      type "sonar"
-      numberOfRays 3
-    }
-    # Distance Sensor - Right
-    DistanceSensor {
-      translation 0 -0.05 0.28
-      rotation 0 0 1 -1.5708
-      children [
-        USE SENSOR_SHAPE
-      ]
-      name "distance_right"
-      lookupTable [
-        0 0 0
-        0.05 50 0
-        1 1000 0
-      ]
-      type "sonar"
-      numberOfRays 3
-    }
-    # Include NAO model
-    Nao {
-      translation 0 0 0
-      rotation 0 0 1 0
-      controller "<extern>"
-      cameraWidth 320
-      cameraHeight 240
-    }
-  ]
   name "NAO"
   controller "nao_office_assistant"
+  cameraWidth 320
+  cameraHeight 240
   supervisor TRUE
 }
 
