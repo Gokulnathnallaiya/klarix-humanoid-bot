@@ -1,24 +1,26 @@
-"""NAO Office Assistant - Demo Controller
-Demonstrates greeting, navigation, and service behaviors in a compact office environment
+"""NAO Intelligent Office Assistant
+Features:
+- Distance sensor-based obstacle avoidance
+- Camera view display
+- Smart navigation with automatic obstacle detection
 """
 
-from controller import Robot, Motion, Camera, Accelerometer, Gyro
+from controller import Robot, Motion, Keyboard, Display
 import sys
-import math
 
 # Create the Robot instance
 robot = Robot()
 timestep = int(robot.getBasicTimeStep())
 
 print("=" * 70)
-print("              NAO OFFICE ASSISTANT - DEMO MODE")
+print("       NAO INTELLIGENT OFFICE ASSISTANT")
 print("=" * 70)
-print("Scenario: Office helper robot demonstrating greeting and coffee service")
+print("Features: Obstacle Avoidance | Camera View | Smart Navigation")
 print("=" * 70)
 
 # Initialize motors
 def init_motors():
-    """Initialize all NAO motors and return as dictionary"""
+    """Initialize all NAO motors"""
     motor_names = [
         'HeadYaw', 'HeadPitch',
         'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw',
@@ -35,123 +37,63 @@ def init_motors():
 
     return motors
 
-# Initialize sensors
-def init_sensors():
-    """Initialize NAO's built-in sensors"""
-    sensors = {}
+# Initialize sensors and devices
+def init_devices():
+    """Initialize sensors, keyboard, camera, and display"""
+    devices = {}
 
-    # Cameras (built-in)
+    # Keyboard
+    keyboard = robot.getKeyboard()
+    keyboard.enable(timestep)
+    devices['keyboard'] = keyboard
+
+    # Distance Sensors
+    sensor_names = ['distance_front', 'distance_front_left', 'distance_front_right',
+                    'distance_left', 'distance_right']
+    devices['distance_sensors'] = {}
+    for name in sensor_names:
+        try:
+            sensor = robot.getDevice(name)
+            if sensor:
+                sensor.enable(timestep)
+                devices['distance_sensors'][name] = sensor
+                print(f"✓ {name} initialized")
+        except:
+            print(f"✗ {name} not found")
+
+    # Cameras
     try:
         top_cam = robot.getDevice('CameraTop')
         if top_cam:
             top_cam.enable(4 * timestep)
-            sensors['camera_top'] = top_cam
-            print("✓ Top camera enabled")
+            devices['camera_top'] = top_cam
+            print("✓ Top camera initialized")
     except:
-        pass
+        print("✗ Top camera not found")
 
     try:
         bottom_cam = robot.getDevice('CameraBottom')
         if bottom_cam:
             bottom_cam.enable(4 * timestep)
-            sensors['camera_bottom'] = bottom_cam
-            print("✓ Bottom camera enabled")
+            devices['camera_bottom'] = bottom_cam
+            print("✓ Bottom camera initialized")
     except:
-        pass
+        print("✗ Bottom camera not found")
 
-    # Accelerometer (built-in)
+    # Display for camera view
     try:
-        accel = robot.getDevice('accelerometer')
-        if accel:
-            accel.enable(timestep)
-            sensors['accelerometer'] = accel
-            print("✓ Accelerometer enabled")
+        display = robot.getDevice('camera_display')
+        if display:
+            devices['display'] = display
+            print("✓ Camera display initialized")
     except:
-        pass
+        print("✗ Display not found")
 
-    # Gyroscope (built-in)
-    try:
-        gyro = robot.getDevice('gyro')
-        if gyro:
-            gyro.enable(timestep)
-            sensors['gyro'] = gyro
-            print("✓ Gyroscope enabled")
-    except:
-        pass
-
-    return sensors
+    return devices
 
 # Gesture functions
-def wave_hello(motors):
-    """Wave right hand to greet"""
-    print("\n👋 Waving hello...")
-
-    # Raise right arm and wave
-    motors['RShoulderPitch'].setPosition(0.0)  # Arm up
-    motors['RShoulderRoll'].setPosition(-0.3)
-    motors['RElbowRoll'].setPosition(1.5)  # Bend elbow
-    motors['RElbowYaw'].setPosition(1.2)
-
-    # Look at person
-    motors['HeadPitch'].setPosition(0.0)
-    motors['HeadYaw'].setPosition(0.0)
-
-    return 3.0  # Duration in seconds
-
-def wave_gesture(motors):
-    """Actual waving motion (repeated)"""
-    motors['RWristYaw'].setPosition(1.0)
-    return 0.5
-
-def reset_arms(motors):
-    """Return arms to neutral standing position"""
-    print("↓ Lowering arms...")
-
-    motors['LShoulderPitch'].setPosition(1.57)
-    motors['RShoulderPitch'].setPosition(1.57)
-    motors['LShoulderRoll'].setPosition(0.2)
-    motors['RShoulderRoll'].setPosition(-0.2)
-    motors['LElbowRoll'].setPosition(-0.5)
-    motors['RElbowRoll'].setPosition(0.5)
-    motors['LWristYaw'].setPosition(0.0)
-    motors['RWristYaw'].setPosition(0.0)
-
-    return 2.0
-
-def point_forward(motors):
-    """Point forward with right arm"""
-    print("\n👉 Pointing forward...")
-
-    motors['RShoulderPitch'].setPosition(0.5)
-    motors['RShoulderRoll'].setPosition(-0.2)
-    motors['RElbowRoll'].setPosition(0.0)  # Straighten arm
-    motors['RElbowYaw'].setPosition(1.2)
-
-    return 2.0
-
-def nod_head(motors):
-    """Nod head yes"""
-    print("Nodding head...")
-    motors['HeadPitch'].setPosition(0.3)
-    return 0.5
-
-def look_around(motors, direction='center'):
-    """Look in different directions"""
-    if direction == 'left':
-        print("👀 Looking left...")
-        motors['HeadYaw'].setPosition(0.8)
-    elif direction == 'right':
-        print("👀 Looking right...")
-        motors['HeadYaw'].setPosition(-0.8)
-    else:
-        motors['HeadYaw'].setPosition(0.0)
-
-    motors['HeadPitch'].setPosition(0.1)
-    return 1.0
-
 def standing_pose(motors):
     """Set stable standing position"""
-    # Arms
     motors['LShoulderPitch'].setPosition(1.57)
     motors['RShoulderPitch'].setPosition(1.57)
     motors['LShoulderRoll'].setPosition(0.2)
@@ -159,7 +101,6 @@ def standing_pose(motors):
     motors['LElbowRoll'].setPosition(-0.5)
     motors['RElbowRoll'].setPosition(0.5)
 
-    # Legs - stable stance
     motors['LHipPitch'].setPosition(-0.05)
     motors['RHipPitch'].setPosition(-0.05)
     motors['LKneePitch'].setPosition(0.1)
@@ -167,182 +108,373 @@ def standing_pose(motors):
     motors['LAnklePitch'].setPosition(-0.05)
     motors['RAnklePitch'].setPosition(-0.05)
 
-    # Head forward
     motors['HeadYaw'].setPosition(0.0)
     motors['HeadPitch'].setPosition(0.0)
 
-# Demo scenario state machine
-class OfficeAssistantDemo:
-    def __init__(self, motors, sensors):
+def wave_gesture(motors):
+    """Wave right hand"""
+    motors['RShoulderPitch'].setPosition(0.0)
+    motors['RShoulderRoll'].setPosition(-0.3)
+    motors['RElbowRoll'].setPosition(1.5)
+    motors['RElbowYaw'].setPosition(1.2)
+
+def point_gesture(motors):
+    """Point forward with right arm"""
+    motors['RShoulderPitch'].setPosition(0.5)
+    motors['RShoulderRoll'].setPosition(-0.2)
+    motors['RElbowRoll'].setPosition(0.0)
+    motors['RElbowYaw'].setPosition(1.2)
+
+def look_direction(motors, direction):
+    """Look in a specific direction"""
+    if direction == 'left':
+        motors['HeadYaw'].setPosition(0.8)
+    elif direction == 'right':
+        motors['HeadYaw'].setPosition(-0.8)
+    elif direction == 'up':
+        motors['HeadYaw'].setPosition(0.0)
+        motors['HeadPitch'].setPosition(-0.3)
+    elif direction == 'down':
+        motors['HeadYaw'].setPosition(0.0)
+        motors['HeadPitch'].setPosition(0.3)
+    else:
+        motors['HeadYaw'].setPosition(0.0)
+        motors['HeadPitch'].setPosition(0.0)
+
+# Intelligent Command Controller
+class IntelligentController:
+    def __init__(self, motors, devices):
         self.motors = motors
-        self.sensors = sensors
-        self.state = "INIT"
-        self.state_timer = 0
-        self.step_count = 0
+        self.devices = devices
+        self.current_command = None
+        self.command_timer = 0
+        self.command_duration = 0
+        self.obstacle_detected = False
+        self.avoiding_obstacle = False
 
-        # Demo sequence
-        self.demo_sequence = [
-            ("GREETING", 8.0, "Greeting the visitor"),
-            ("WAVE", 3.0, "Waving hello"),
-            ("INTRODUCE", 5.0, "Introduction gesture"),
-            ("LOOK_COFFEE", 3.0, "Looking at coffee station"),
-            ("POINT_COFFEE", 3.0, "Pointing to coffee station"),
-            ("WALK_TO_COFFEE", 6.0, "Walking to coffee station"),
-            ("LOOK_DESK", 3.0, "Looking at desk"),
-            ("POINT_DESK", 3.0, "Pointing to desk"),
-            ("WALK_TO_DESK", 6.0, "Walking to desk"),
-            ("LOOK_AROUND", 4.0, "Looking around office"),
-            ("FINAL_WAVE", 4.0, "Final greeting"),
-            ("RETURN_START", 6.0, "Returning to start position"),
-            ("IDLE", 5.0, "Standing ready"),
-        ]
-
-        self.current_sequence_index = 0
-        self.motion_loaded = False
+        # Motion objects
         self.forward_motion = None
+        self.backward_motion = None
         self.turn_left_motion = None
         self.turn_right_motion = None
+        self.sidestep_left_motion = None
+        self.sidestep_right_motion = None
 
-        # Try to load motions
         self.load_motions()
+        standing_pose(self.motors)
 
     def load_motions(self):
         """Load NAO's built-in motions"""
         try:
             self.forward_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/Forwards.motion')
-            print("✓ Forward walking motion loaded")
-            self.motion_loaded = True
+            print("✓ Forward motion loaded")
         except:
             print("✗ Forward motion not available")
+
+        try:
+            self.backward_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/Backwards.motion')
+            print("✓ Backward motion loaded")
+        except:
+            pass
 
         try:
             self.turn_left_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/TurnLeft60.motion')
             print("✓ Turn left motion loaded")
         except:
-            print("✗ Turn left motion not available")
+            pass
 
         try:
             self.turn_right_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/TurnRight60.motion')
             print("✓ Turn right motion loaded")
         except:
-            print("✗ Turn right motion not available")
+            pass
 
-    def get_current_demo_state(self):
-        """Get current demo sequence state"""
-        if self.current_sequence_index < len(self.demo_sequence):
-            return self.demo_sequence[self.current_sequence_index]
-        return ("COMPLETE", 0, "Demo complete - restarting")
+        try:
+            self.sidestep_left_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/SideStepLeft.motion')
+            print("✓ Sidestep left motion loaded")
+        except:
+            pass
 
-    def advance_sequence(self):
-        """Move to next state in demo sequence"""
-        self.current_sequence_index += 1
-        if self.current_sequence_index >= len(self.demo_sequence):
-            # Loop the demo
-            self.current_sequence_index = 0
-            print("\n" + "=" * 70)
-            print("Demo cycle complete - Restarting from beginning...")
-            print("=" * 70 + "\n")
+        try:
+            self.sidestep_right_motion = Motion('/usr/local/webots/projects/robots/softbank/nao/motions/SideStepRight.motion')
+            print("✓ Sidestep right motion loaded")
+        except:
+            pass
 
-        self.state_timer = 0
-        state_name, duration, description = self.get_current_demo_state()
-        print(f"\n▶ STATE {self.current_sequence_index + 1}: {state_name}")
-        print(f"  {description} (duration: {duration}s)")
+    def read_distance_sensors(self):
+        """Read all distance sensors and check for obstacles"""
+        if 'distance_sensors' not in self.devices:
+            return {}
+
+        distances = {}
+        for name, sensor in self.devices['distance_sensors'].items():
+            value = sensor.getValue()
+            distances[name] = value
+
+        return distances
+
+    def check_obstacles(self, distances):
+        """Check if there are obstacles in the path"""
+        OBSTACLE_THRESHOLD = 700  # Distance threshold in mm
+
+        obstacles = {
+            'front': False,
+            'front_left': False,
+            'front_right': False,
+            'left': False,
+            'right': False
+        }
+
+        if 'distance_front' in distances and distances['distance_front'] < OBSTACLE_THRESHOLD:
+            obstacles['front'] = True
+
+        if 'distance_front_left' in distances and distances['distance_front_left'] < OBSTACLE_THRESHOLD:
+            obstacles['front_left'] = True
+
+        if 'distance_front_right' in distances and distances['distance_front_right'] < OBSTACLE_THRESHOLD:
+            obstacles['front_right'] = True
+
+        if 'distance_left' in distances and distances['distance_left'] < 500:
+            obstacles['left'] = True
+
+        if 'distance_right' in distances and distances['distance_right'] < 500:
+            obstacles['right'] = True
+
+        return obstacles
+
+    def avoid_obstacle(self):
+        """Determine best direction to avoid obstacle"""
+        distances = self.read_distance_sensors()
+        obstacles = self.check_obstacles(distances)
+
+        # Determine avoidance strategy
+        if obstacles['front']:
+            print("\n⚠ OBSTACLE AHEAD!")
+            # Choose direction with more space
+            if not obstacles['right']:
+                print("  → Turning right to avoid")
+                return 'turn_right'
+            elif not obstacles['left']:
+                print("  → Turning left to avoid")
+                return 'turn_left'
+            else:
+                print("  → Backing up")
+                return 'back_up'
+
+        elif obstacles['front_left'] and not obstacles['front_right']:
+            print("\n⚠ Obstacle on front-left, adjusting right")
+            return 'sidestep_right'
+
+        elif obstacles['front_right'] and not obstacles['front_left']:
+            print("\n⚠ Obstacle on front-right, adjusting left")
+            return 'sidestep_left'
+
+        return None
+
+    def update_camera_display(self):
+        """Update display with camera image"""
+        if 'camera_top' not in self.devices or 'display' not in self.devices:
+            return
+
+        camera = self.devices['camera_top']
+        display = self.devices['display']
+
+        image = camera.getImage()
+        if image:
+            display.imageNew(image, Display.RGB, camera.getWidth(), camera.getHeight())
+
+    def execute_command(self, command, param=1):
+        """Execute a specific command"""
+        self.current_command = command
+        self.command_timer = 0
+        self.step_count = 0
+
+        print(f"\n▶ Executing: {command.upper()} (param: {param})")
+
+        if command == 'walk_forward':
+            self.command_duration = param * 2.0
+            if self.forward_motion:
+                self.forward_motion.play()
+
+        elif command == 'walk_backward':
+            self.command_duration = param * 2.0
+            if self.backward_motion:
+                self.backward_motion.play()
+
+        elif command == 'turn_left':
+            self.command_duration = param * 1.5
+            if self.turn_left_motion:
+                self.turn_left_motion.play()
+
+        elif command == 'turn_right':
+            self.command_duration = param * 1.5
+            if self.turn_right_motion:
+                self.turn_right_motion.play()
+
+        elif command == 'sidestep_left':
+            self.command_duration = param * 2.0
+            if self.sidestep_left_motion:
+                self.sidestep_left_motion.play()
+
+        elif command == 'sidestep_right':
+            self.command_duration = param * 2.0
+            if self.sidestep_right_motion:
+                self.sidestep_right_motion.play()
+
+        elif command == 'wave':
+            self.command_duration = 3.0
+            wave_gesture(self.motors)
+
+        elif command == 'point':
+            self.command_duration = 2.0
+            point_gesture(self.motors)
+
+        elif command in ['look_left', 'look_right', 'look_up', 'look_down', 'look_center']:
+            self.command_duration = 1.0
+            look_direction(self.motors, command.replace('look_', ''))
+
+        elif command == 'stand':
+            self.command_duration = 1.0
+            standing_pose(self.motors)
+
+        else:
+            print(f"  Unknown command: {command}")
+            self.current_command = None
 
     def update(self):
-        """Update demo state machine"""
+        """Update controller state"""
+        # Update camera display
+        self.update_camera_display()
+
+        # Read sensors
+        distances = self.read_distance_sensors()
+
+        # Display sensor readings periodically
+        if self.step_count % 25 == 0 and distances:
+            print(f"\r[Sensors] F:{distances.get('distance_front', 0):.0f} " +
+                  f"FL:{distances.get('distance_front_left', 0):.0f} " +
+                  f"FR:{distances.get('distance_front_right', 0):.0f} " +
+                  f"L:{distances.get('distance_left', 0):.0f} " +
+                  f"R:{distances.get('distance_right', 0):.0f}", end='    ')
+
         self.step_count += 1
-        self.state_timer += timestep / 1000.0  # Convert to seconds
 
-        state_name, duration, description = self.get_current_demo_state()
+        # Check for keyboard input
+        key = self.devices['keyboard'].getKey()
 
-        # Check if current state duration expired
-        if self.state_timer >= duration:
-            self.advance_sequence()
-            state_name, duration, description = self.get_current_demo_state()
+        if key != -1 and self.current_command is None:
+            self.handle_key(key)
 
-        # Execute state behavior
-        if state_name == "GREETING":
-            if self.state_timer < 0.1:  # First frame
-                standing_pose(self.motors)
-                look_around(self.motors, 'center')
+        # Update current command
+        if self.current_command:
+            self.command_timer += timestep / 1000.0
 
-        elif state_name == "WAVE":
-            if self.state_timer < 0.1:
-                wave_hello(self.motors)
-            elif 1.0 < self.state_timer < 1.5:
-                wave_gesture(self.motors)
-            elif 2.0 < self.state_timer < 2.5:
-                self.motors['RWristYaw'].setPosition(-1.0)
+            # Check for obstacles during movement
+            if self.current_command == 'walk_forward':
+                obstacles = self.check_obstacles(distances)
 
-        elif state_name == "INTRODUCE":
-            if self.state_timer < 0.1:
-                reset_arms(self.motors)
-            elif self.state_timer > 2.0 and self.state_timer < 2.1:
-                nod_head(self.motors)
+                if obstacles['front'] or obstacles['front_left'] or obstacles['front_right']:
+                    # Obstacle detected! Stop and avoid
+                    print("\n🛑 OBSTACLE DETECTED - Initiating avoidance maneuver")
+                    avoidance_action = self.avoid_obstacle()
 
-        elif state_name == "LOOK_COFFEE":
-            if self.state_timer < 0.1:
-                look_around(self.motors, 'left')
+                    if avoidance_action:
+                        self.execute_command(avoidance_action, 1)
+                        return
 
-        elif state_name == "POINT_COFFEE":
-            if self.state_timer < 0.1:
-                point_forward(self.motors)
+                # Continue walking if no obstacle
+                if self.forward_motion and self.forward_motion.isOver() and self.command_timer < self.command_duration:
+                    self.forward_motion.play()
 
-        elif state_name == "WALK_TO_COFFEE":
-            if self.state_timer < 0.1:
-                reset_arms(self.motors)
-                if self.turn_left_motion:
+            elif self.current_command == 'walk_backward' and self.backward_motion:
+                if self.backward_motion.isOver() and self.command_timer < self.command_duration:
+                    self.backward_motion.play()
+
+            elif self.current_command == 'turn_left' and self.turn_left_motion:
+                if self.turn_left_motion.isOver() and self.command_timer < self.command_duration:
                     self.turn_left_motion.play()
-            elif self.state_timer > 1.0 and self.motion_loaded and self.forward_motion:
-                if self.forward_motion.isOver():
-                    self.forward_motion.play()
 
-        elif state_name == "LOOK_DESK":
-            if self.state_timer < 0.1:
-                look_around(self.motors, 'right')
-
-        elif state_name == "POINT_DESK":
-            if self.state_timer < 0.1:
-                point_forward(self.motors)
-
-        elif state_name == "WALK_TO_DESK":
-            if self.state_timer < 0.1:
-                reset_arms(self.motors)
-                if self.turn_right_motion:
+            elif self.current_command == 'turn_right' and self.turn_right_motion:
+                if self.turn_right_motion.isOver() and self.command_timer < self.command_duration:
                     self.turn_right_motion.play()
-            elif self.state_timer > 1.0 and self.motion_loaded and self.forward_motion:
-                if self.forward_motion.isOver():
-                    self.forward_motion.play()
 
-        elif state_name == "LOOK_AROUND":
-            if self.state_timer < 1.5:
-                look_around(self.motors, 'left')
-            elif self.state_timer < 3.0:
-                look_around(self.motors, 'right')
-            else:
-                look_around(self.motors, 'center')
+            elif self.current_command == 'sidestep_left' and self.sidestep_left_motion:
+                if self.sidestep_left_motion.isOver() and self.command_timer < self.command_duration:
+                    self.sidestep_left_motion.play()
 
-        elif state_name == "FINAL_WAVE":
-            if self.state_timer < 0.1:
-                wave_hello(self.motors)
-            elif 1.5 < self.state_timer < 2.0:
-                wave_gesture(self.motors)
+            elif self.current_command == 'sidestep_right' and self.sidestep_right_motion:
+                if self.sidestep_right_motion.isOver() and self.command_timer < self.command_duration:
+                    self.sidestep_right_motion.play()
 
-        elif state_name == "RETURN_START":
-            if self.state_timer < 0.1:
-                reset_arms(self.motors)
-            # Simplified return - just stand in place
-            standing_pose(self.motors)
+            # Check if command completed
+            if self.command_timer >= self.command_duration:
+                print(f"\n  ✓ Command completed")
+                self.current_command = None
+                standing_pose(self.motors)
 
-        elif state_name == "IDLE":
-            if self.state_timer < 0.1:
-                reset_arms(self.motors)
-            standing_pose(self.motors)
+    def handle_key(self, key):
+        """Handle keyboard input"""
+        # Movement commands
+        if key == ord('W'):
+            self.execute_command('walk_forward', 5)
+        elif key == ord('S'):
+            self.execute_command('walk_backward', 3)
+        elif key == ord('A'):
+            self.execute_command('turn_left', 1)
+        elif key == ord('D'):
+            self.execute_command('turn_right', 1)
+        elif key == ord('Q'):
+            self.execute_command('sidestep_left', 2)
+        elif key == ord('E'):
+            self.execute_command('sidestep_right', 2)
 
-        # Progress indicator
-        if self.step_count % 50 == 0:
-            progress = (self.state_timer / duration) * 100
-            print(f"\r  Progress: [{int(progress)}%] {self.state_timer:.1f}s / {duration:.1f}s", end='')
+        # Gesture commands
+        elif key == ord('V'):
+            self.execute_command('wave', 1)
+        elif key == ord('P'):
+            self.execute_command('point', 1)
+
+        # Look commands
+        elif key == Keyboard.LEFT:
+            self.execute_command('look_left', 1)
+        elif key == Keyboard.RIGHT:
+            self.execute_command('look_right', 1)
+        elif key == Keyboard.UP:
+            self.execute_command('look_up', 1)
+        elif key == Keyboard.DOWN:
+            self.execute_command('look_down', 1)
+        elif key == ord('C'):
+            self.execute_command('look_center', 1)
+
+        # Reset to standing
+        elif key == ord(' '):
+            self.execute_command('stand', 1)
+
+    def print_help(self):
+        """Print available commands"""
+        print("\n" + "=" * 70)
+        print("KEYBOARD COMMANDS")
+        print("=" * 70)
+        print("\nMOVEMENT:")
+        print("  W - Walk forward (5 steps) - AUTO OBSTACLE AVOIDANCE")
+        print("  S - Walk backward (3 steps)")
+        print("  A - Turn left (60°)")
+        print("  D - Turn right (60°)")
+        print("  Q - Sidestep left")
+        print("  E - Sidestep right")
+        print("\nGESTURES:")
+        print("  V - Wave hand")
+        print("  P - Point forward")
+        print("\nHEAD CONTROL:")
+        print("  ← → ↑ ↓ - Look left/right/up/down")
+        print("  C - Look center (reset head)")
+        print("\nOTHER:")
+        print("  SPACE - Return to standing pose")
+        print("\n🤖 INTELLIGENT FEATURES:")
+        print("  • Automatic obstacle detection with distance sensors")
+        print("  • Camera view displayed on screen in environment")
+        print("  • Real-time sensor feedback")
+        print("=" * 70 + "\n")
 
 
 # Main execution
@@ -350,34 +482,26 @@ print("\n[1/2] Initializing motors...")
 motors = init_motors()
 print(f"✓ {len(motors)} motors initialized")
 
-print("\n[2/2] Initializing sensors...")
-sensors = init_sensors()
+print("\n[2/2] Initializing devices...")
+devices = init_devices()
 
 print("\n" + "=" * 70)
-print("DEMO STARTING")
+print("INTELLIGENT NAVIGATION READY")
 print("=" * 70)
-print("\nScenario: NAO demonstrates office assistant capabilities")
-print("  • Greeting visitors")
-print("  • Pointing to coffee station")
-print("  • Pointing to work desk")
-print("  • Basic navigation gestures")
-print("\nThe demo will loop continuously...")
-print("=" * 70 + "\n")
 
-# Initialize demo
-standing_pose(motors)
-demo = OfficeAssistantDemo(motors, sensors)
+# Initialize controller
+controller = IntelligentController(motors, devices)
+controller.print_help()
 
-# Wait a moment before starting
-for i in range(50):
-    robot.step(timestep)
-
-print("\n🚀 Starting demo sequence...\n")
+print("Waiting for commands...\n")
 
 # Main control loop
 try:
+    step_counter = 0
     while robot.step(timestep) != -1:
-        demo.update()
+        step_counter += 1
+        controller.step_count = step_counter
+        controller.update()
 except KeyboardInterrupt:
-    print("\n\nDemo stopped by user")
+    print("\n\nController stopped by user")
     print("=" * 70)
