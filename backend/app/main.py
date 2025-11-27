@@ -5,18 +5,36 @@ from contextlib import asynccontextmanager
 
 from app.api import robot
 from app.services.robot_controller import robot_controller
+from app.services.webots_bridge import webots_bridge
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events"""
     # Startup
+    print("=" * 60)
     print("Starting NAO Robot Control API...")
+    print("=" * 60)
+
+    # Start Webots bridge server
+    await webots_bridge.start_server()
+
+    # Connect robot controller to bridge
+    robot_controller.set_bridge(webots_bridge)
     await robot_controller.connect()
+
+    print("✓ Backend ready - Waiting for Webots controller connection...")
+    print(f"✓ Frontend: http://localhost:3000")
+    print(f"✓ API Docs: http://localhost:8000/docs")
+    print("=" * 60)
+
     yield
+
     # Shutdown
-    print("Shutting down NAO Robot Control API...")
+    print("\nShutting down NAO Robot Control API...")
     await robot_controller.disconnect()
+    await webots_bridge.stop()
+    print("✓ Shutdown complete")
 
 
 app = FastAPI(

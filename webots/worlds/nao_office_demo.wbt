@@ -409,7 +409,7 @@ Pedestrian {
   skinColor 0.9 0.7 0.6
 }
 
-# NAO Robot
+# NAO Robot - Web Controlled
 Nao {
   translation 0 0 0.334
   rotation 0 0 1 0

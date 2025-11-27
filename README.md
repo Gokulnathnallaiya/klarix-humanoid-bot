@@ -1,332 +1,321 @@
-# NAO Office Assistant - Command-Based Control
+# 🤖 NAO Robot Web Control System
 
-A Webots R2023b simulation project featuring the NAO humanoid robot with keyboard-controlled commands. Control NAO with discrete actions like walking, turning, waving, and pointing in a realistic office environment.
+Full-stack web application for controlling a NAO humanoid robot in Webots simulation through an intuitive web interface.
 
-## Features
+![NAO Robot](nao_office_demo.png)
 
-### 🎮 Command-Based Control
+## 🎯 Features
 
-Control NAO with keyboard commands - no automatic looping! Each command executes once and waits for the next:
+- **Modern Web Interface** - Control NAO robot from your browser
+- **Real-time Updates** - WebSocket-based live status updates
+- **Gesture Control** - Wave, point, and standing poses
+- **Head Movement** - Up, down, left, right controls
+- **Walking Movements** - Forward, backward, turning
+- **RESTful API** - Complete API for robot control
+- **Responsive Design** - Works on desktop and mobile
 
-**Movement Commands:**
-- **W** - Walk forward (5 steps)
-- **S** - Walk backward (3 steps)
-- **A** - Turn left (60°)
-- **D** - Turn right (60°)
-- **Q** - Sidestep left
-- **E** - Sidestep right
+## 🏗️ Architecture
 
-**Gesture Commands:**
-- **V** - Wave hand
-- **P** - Point forward
+```
+Frontend (Next.js + React)  →  Backend (FastAPI)  →  Webots Simulator
+    Port 3000                    Port 8000/10020        NAO Robot
 
-**Head Control:**
-- **Arrow Keys** (←→↑↓) - Look left/right/up/down
-- **C** - Look center (reset head)
+         ↓                            ↓                      ↓
+    User Interface          REST API + WebSocket      Physics Simulation
+```
 
-**Other:**
-- **SPACE** - Return to standing pose
+### Technology Stack
 
-### 🏢 Office Environment
+- **Frontend**: Next.js 15, React 18, TypeScript, Tailwind CSS
+- **Backend**: Python FastAPI, WebSockets, Pydantic
+- **Simulation**: Webots R2023b, NAO Robot Model
+- **Communication**: REST API, WebSocket, TCP Sockets
 
-- **Compact Design**: 8x8m room (perfect for demos and presentations)
-- **Work Area**: Desk with computer monitor, keyboard, and chair
-- **Coffee Station**: Table with coffee machine and cups
-- **Reception Area**: Visitor greeting zone with pedestrian
-- **Decorations**: Potted plants and proper office aesthetics
-- **Visual Navigation Markers**: Color-coded floor markers for key locations
-- **Professional Lighting**: Ambient and task lighting for realism
+## 📁 Project Structure
 
-## Quick Start
+```
+klarix-humanoid-bot/
+├── frontend/                   # Next.js React application
+│   ├── app/                   # Next.js app directory
+│   │   ├── page.tsx          # Home page
+│   │   ├── layout.tsx        # Root layout
+│   │   └── globals.css       # Global styles
+│   ├── components/           # React components
+│   │   └── RobotControl.tsx  # Main control interface
+│   └── package.json          # Frontend dependencies
+│
+├── backend/                   # FastAPI backend
+│   ├── app/
+│   │   ├── main.py           # FastAPI application
+│   │   ├── api/
+│   │   │   └── robot.py      # API endpoints
+│   │   ├── models/
+│   │   │   └── robot.py      # Pydantic models
+│   │   └── services/
+│   │       ├── robot_controller.py   # Robot control logic
+│   │       └── webots_bridge.py      # Webots communication
+│   └── requirements.txt      # Python dependencies
+│
+├── webots/                    # Webots simulation
+│   ├── worlds/
+│   │   └── nao_office_demo.wbt      # Office environment
+│   └── controllers/
+│       └── nao_office_assistant/
+│           ├── nao_office_assistant.py   # Main controller
+│           └── backend_client.py          # Backend communication
+│
+├── README.md                  # This file
+├── CLAUDE.md                  # AI assistant context
+└── .gitignore                 # Git ignore rules
+```
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Webots R2023b or compatible version
-- Python environment with Webots controller library
 
-### Running the Controller
+- **Webots R2023b** - [Download](https://github.com/cyberbotics/webots/releases/tag/R2023b)
+- **Python 3.8+** - For backend
+- **Node.js 18+** - For frontend
 
+### Installation
+
+**1. Clone Repository**
 ```bash
-1. Open Webots
-2. File > Open World > worlds/nao_office_demo.wbt
-3. Click Play (or press Ctrl+.)
-4. Click on the 3D view window to focus it
-5. Press keyboard commands to control NAO!
+git clone https://github.com/Gokulnathnallaiya/klarix-humanoid-bot.git
+cd klarix-humanoid-bot
 ```
 
-**Important**: Make sure the 3D view window is focused (clicked) to receive keyboard input.
-
-### Camera Controls
-
-The camera automatically follows NAO using **"Pan and Tilt Shot"** mode for smooth tracking:
-
-**Automatic Tracking:**
-- Camera smoothly pans and tilts to keep NAO centered
-- Positioned at optimal angle to see gestures and movements
-- Follows robot through entire demo sequence
-
-**Manual Control (if needed):**
-- **Click and Drag** - Rotate view around the scene
-- **Scroll Wheel** - Zoom in/out
-- **Right-click + Drag** - Pan camera position
-- **Shift + Click** - Select and follow NAO manually
-- **Ctrl + 1** - Return to default follow viewpoint
-
-**Tips for Best View:**
-- The camera automatically tracks NAO - just press Play!
-- If you lose tracking, press **Ctrl + 1** to reset the viewpoint
-- You can pause (Spacebar) to manually adjust the view angle
-- The camera stays at NAO's height level for best gesture visibility
-
-## How Commands Work
-
-### Command Execution
-
-- **One command at a time**: NAO completes each command before accepting the next
-- **Timed actions**: Each command has a specific duration (e.g., walk forward = 10 seconds)
-- **Auto-return to standing**: After each gesture, NAO returns to neutral standing pose
-- **Visual feedback**: Console shows which command is executing
-
-### Example Command Sequence
-
-```
-Press W → NAO walks forward 5 steps → Returns to standing → Waits
-Press A → NAO turns left 60° → Returns to standing → Waits
-Press V → NAO waves hand → Returns to standing → Waits
-Press P → NAO points forward → Returns to standing → Waits
+**2. Install Backend Dependencies**
+```bash
+cd backend
+pip install -r requirements.txt
 ```
 
-### Navigation Reference Points
-
-The office has visual floor markers to help navigate:
-
-- **Blue marker**: Greeting area (center south)
-- **Brown marker**: Coffee station (left side)
-- **Orange marker**: Work desk (right side)
-
-## Project Structure
-
-```
-humanoid_robot_project/
-├── worlds/
-│   └── nao_office_demo.wbt        # Office environment
-├── controllers/
-│   └── nao_office_assistant/
-│       └── nao_office_assistant.py # Demo controller
-├── CLAUDE.md                       # Developer documentation
-└── README.md                       # This file
+**3. Install Frontend Dependencies**
+```bash
+cd frontend
+npm install
 ```
 
-## Console Output
+### Running the Application
 
-When you run the controller, you'll see:
+**IMPORTANT: Start services in this order:**
 
-```
-======================================================================
-          NAO OFFICE ASSISTANT - COMMAND MODE
-======================================================================
-Control NAO with keyboard commands!
-======================================================================
-
-[1/2] Initializing motors...
-✓ 24 motors initialized
-
-[2/2] Initializing keyboard...
-✓ Keyboard initialized
-
-======================================================================
-COMMAND MODE READY
-======================================================================
-
-======================================================================
-KEYBOARD COMMANDS
-======================================================================
-
-MOVEMENT:
-  W - Walk forward (5 steps)
-  S - Walk backward (3 steps)
-  A - Turn left (60°)
-  D - Turn right (60°)
-  Q - Sidestep left
-  E - Sidestep right
-
-GESTURES:
-  V - Wave hand
-  P - Point forward
-
-HEAD CONTROL:
-  ← → ↑ ↓ - Look left/right/up/down
-  C - Look center (reset head)
-
-OTHER:
-  SPACE - Return to standing pose
-
-NOTE: Commands execute one at a time
-======================================================================
-
-Waiting for commands...
-
-▶ Executing: WALK_FORWARD (param: 5)
-  ✓ Command completed
-
-▶ Executing: WAVE (param: 1)
-  ✓ Command completed
+#### Terminal 1: Backend Server
+```bash
+cd backend
+python -m app.main
 ```
 
-## Sensors & Hardware
+Wait for:
+```
+✓ Webots bridge listening on localhost:10020
+✓ Backend ready - Waiting for Webots controller connection...
+```
 
-The demo uses only NAO's **built-in sensors** (no custom hardware required):
+#### Terminal 2: Webots Simulation
+```bash
+webots webots/worlds/nao_office_demo.wbt
+```
 
-- **CameraTop** - Top-mounted camera (320x240 @ 30fps)
-- **CameraBottom** - Bottom camera (320x240 @ 30fps)
-- **Accelerometer** - 3-axis acceleration measurement
-- **Gyroscope** - 3-axis rotation measurement
+Wait for:
+```
+✓ Connected to backend at localhost:10020
+✓ Ready to receive commands from web interface!
+```
 
-All navigation is **pre-scripted** based on precise timing, making it reliable and repeatable for demonstrations.
+#### Terminal 3: Frontend (Optional - for UI)
+```bash
+cd frontend
+npm run dev
+```
 
-## Gestures Implemented
+### Access Points
 
-The controller includes these interactive gesture functions:
+- **Web Interface**: http://localhost:3000
+- **API Documentation**: http://localhost:8000/docs
+- **API Health Check**: http://localhost:8000/health
 
-| Function | Description |
-|----------|-------------|
-| `wave_hello()` | Raises right arm and waves at visitor |
-| `wave_gesture()` | Performs actual waving motion with wrist |
-| `point_forward()` | Points in a direction with extended arm |
-| `nod_head()` | Nods head affirmatively |
-| `look_around(direction)` | Looks left, right, or center |
-| `standing_pose()` | Returns to neutral standing stance |
-| `reset_arms()` | Lowers arms to resting position at sides |
+## 🎮 Usage
 
-## NAO Robot Specifications
+### Web Interface
 
-- **Height**: 57cm (23 inches)
-- **Weight**: ~5.4kg in simulation
-- **Motors**: 24 controlled joints
-  - Head: 2 (yaw, pitch)
-  - Arms: 12 (6 per arm)
-  - Legs: 10 (5 per leg)
-- **Built-in Motions**: Forward walk, turn left/right, side step
-- **Sensors**: Cameras, accelerometer, gyroscope
+1. Open http://localhost:3000 in your browser
+2. Verify both indicators are green (Backend + Robot)
+3. Click control buttons:
+   - **Purple buttons**: Gestures (Wave, Point, Stand)
+   - **Blue buttons**: Head movements
+   - **Green buttons**: Walking movements
 
-## Use Cases
+### API Usage
 
-Perfect for:
+**Gesture Control:**
+```bash
+curl -X POST http://localhost:8000/api/robot/gesture \
+  -H "Content-Type: application/json" \
+  -d '{"gesture": "wave"}'
+```
 
-- 🎓 **Educational Labs** - Students learn robot control and programming
-- 🎮 **Interactive Demos** - Live control demonstrations at exhibitions
-- 🧪 **Algorithm Testing** - Test navigation and behavior algorithms
-- 🔬 **HRI Research** - Study command-based human-robot interaction
-- 📚 **Teaching** - Demonstrate discrete robot commands and state machines
-- 🤖 **Development** - Prototype and test robot behaviors interactively
+**Head Movement:**
+```bash
+curl -X POST http://localhost:8000/api/robot/head/move \
+  -H "Content-Type: application/json" \
+  -d '{"direction": "left"}'
+```
 
-## Customization Guide
+**Walking:**
+```bash
+curl -X POST http://localhost:8000/api/robot/walk \
+  -H "Content-Type: application/json" \
+  -d '{"movement": "forward", "duration": 2.0}'
+```
 
-Easily customize the controller:
+**Get Status:**
+```bash
+curl http://localhost:8000/api/robot/status
+```
 
-### Add New Commands
-Edit the `handle_key()` method in `nao_office_assistant.py`:
+### WebSocket Real-time Updates
+
+```javascript
+const ws = new WebSocket('ws://localhost:8000/api/robot/ws');
+
+ws.onmessage = (event) => {
+  const status = JSON.parse(event.data);
+  console.log('Robot status:', status);
+};
+```
+
+## 🔧 API Reference
+
+### REST Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/robot/gesture` | Execute gesture (wave, point, stand) |
+| POST | `/api/robot/head/move` | Move head (up, down, left, right) |
+| POST | `/api/robot/walk` | Walk (forward, backward, turn_left, turn_right) |
+| POST | `/api/robot/motor` | Set single motor position |
+| POST | `/api/robot/motors` | Set multiple motor positions |
+| GET | `/api/robot/status` | Get current robot status |
+| POST | `/api/robot/connect` | Connect to robot |
+| POST | `/api/robot/disconnect` | Disconnect from robot |
+
+### WebSocket
+
+- **Endpoint**: `ws://localhost:8000/api/robot/ws`
+- **Purpose**: Real-time status updates
+- **Message Format**: JSON
+
+## 🛠️ Troubleshooting
+
+### Backend won't start
+```bash
+# Check if ports are in use
+lsof -i :8000
+lsof -i :10020
+
+# Kill processes using these ports
+kill -9 <PID>
+```
+
+### Webots controller can't connect
+- ✅ Ensure backend started **before** Webots
+- ✅ Check backend shows "Waiting for Webots controller connection..."
+- ✅ Restart Webots simulation (`Ctrl+Shift+R`)
+
+### Frontend shows "Backend not connected"
+- ✅ Backend must be running on port 8000
+- ✅ Check: http://localhost:8000/docs
+- ✅ Look for CORS errors in browser console
+
+### Robot doesn't move
+- ✅ Check Webots console for connection message
+- ✅ Verify both green indicators in web UI
+- ✅ Check backend terminal for command logs
+
+## 🧪 Development
+
+### Adding New Gestures
+
+**Backend** (`backend/app/services/robot_controller.py`):
 ```python
-elif key == ord('X'):  # Add your key
-    self.execute_command('my_command', 1)
+async def new_gesture(self, gesture_name: str) -> Dict:
+    command = {"type": "gesture", "gesture": gesture_name}
+    return await self.webots_bridge.send_command(command)
 ```
 
-Then add the command logic in `execute_command()`:
+**Webots Controller** (`webots/controllers/nao_office_assistant/nao_office_assistant.py`):
 ```python
-elif command == 'my_command':
-    self.command_duration = 2.0
-    # Your custom motor positions here
-    motors['RShoulderPitch'].setPosition(1.0)
+def new_gesture():
+    motors['RShoulderPitch'].setVelocity(3.0)
+    motors['RShoulderPitch'].setPosition(0.5)
+    # Add motor commands...
 ```
 
-### Modify Step Counts
-Change the default step counts in `handle_key()`:
-```python
-elif key == ord('W'):
-    self.execute_command('walk_forward', 10)  # Change from 5 to 10 steps
+**Frontend** (`frontend/components/RobotControl.tsx`):
+```typescript
+const newGesture = {
+  name: 'New Gesture',
+  value: 'new_gesture',
+  icon: IconName,
+  color: 'bg-purple-500 hover:bg-purple-600'
+};
 ```
 
-### Add New Gestures
-Create new gesture functions:
-```python
-def salute_gesture(motors):
-    """Military salute"""
-    motors['RShoulderPitch'].setPosition(0.0)
-    motors['RShoulderRoll'].setPosition(-0.5)
-    motors['RElbowRoll'].setPosition(1.8)
+## 📊 Communication Flow
+
+```
+1. User clicks "Wave" button
+   ↓
+2. Frontend → POST http://localhost:8000/api/robot/gesture
+   ↓
+3. Backend receives REST request
+   ↓
+4. Backend → TCP Socket (port 10020) → Webots Controller
+   ↓
+5. Webots Controller executes motor commands
+   ↓
+6. NAO Robot moves in simulation
+   ↓
+7. Webots Controller → Status → Backend
+   ↓
+8. Backend → WebSocket → Frontend
+   ↓
+9. Frontend updates UI in real-time
 ```
 
-### Change Environment
-Edit `nao_office_demo.wbt` to:
-- Add/remove furniture and obstacles
-- Change room size and layout
-- Modify lighting and appearance
-- Add obstacles for navigation challenges
+## 🤝 Contributing
 
-## Troubleshooting
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-**Q: Keyboard commands don't work?**
-A: Make sure you've clicked on the 3D view window to focus it. The window must be active to receive keyboard input.
+## 📝 License
 
-**Q: Robot falls over during walking?**
-A: Ensure the robot starts in proper standing position (press SPACE to reset).
+This project is open source and available under the MIT License.
 
-**Q: Commands don't execute?**
-A: Wait for the current command to complete. Only one command runs at a time. Check console for "✓ Command completed".
+## 🙏 Acknowledgments
 
-**Q: Walking motions don't load?**
-A: Check Webots installation path for motion files. Robot will maintain standing position if motions unavailable.
+- **Webots** - Robot simulation software by Cyberbotics
+- **NAO Robot** - Humanoid robot by SoftBank Robotics
+- **FastAPI** - Modern web framework for Python
+- **Next.js** - React framework for production
 
-**Q: How to change step count?**
-A: Modify the parameter in `execute_command()` calls (e.g., change `walk_forward, 5` to desired steps).
+## 📧 Contact
 
-**Q: Want to add voice feedback?**
-A: Integrate Python text-to-speech library (pyttsx3) in the command execution functions.
+- **Repository**: https://github.com/Gokulnathnallaiya/klarix-humanoid-bot
+- **Issues**: https://github.com/Gokulnathnallaiya/klarix-humanoid-bot/issues
 
-## Development
+## 🎓 Learning Resources
 
-For detailed technical documentation, see [CLAUDE.md](CLAUDE.md):
-- Controller architecture patterns
-- Complete motor and sensor device names
-- World file structure and VRML syntax
-- Gesture programming techniques
-- Motion file usage and paths
-- Code examples and best practices
-
-## Technologies
-
-- **Webots R2023b** - Professional robot simulation platform
-- **Python 3** - Controller programming language
-- **NAO Robot** - SoftBank Robotics humanoid platform
-- **VRML** - 3D world definition format
-
-## Future Enhancement Ideas
-
-- 🎮 **Gamepad support** - Use joystick/gamepad instead of keyboard
-- 🔊 **Voice commands** - Control NAO with speech recognition
-- 📱 **Web interface** - Control from browser or mobile app
-- 🧠 **AI integration** - Autonomous decision-making with LLMs
-- 🎯 **Mission mode** - Chain commands into saved sequences
-- 📊 **Telemetry logging** - Record and replay command sequences
-- 🤖 **Sensor feedback** - Use cameras for obstacle detection
-- 🎪 **Choreography mode** - Create and playback dance routines
-- 🔄 **Macro commands** - Define complex multi-step behaviors
-- 📡 **Remote control** - Control over network/ROS integration
-
-## License & Credits
-
-This project uses:
-- Webots simulation environment by Cyberbotics
-- NAO robot model by SoftBank Robotics
-- Standard Webots PROTO libraries for objects and environments
+- [Webots Documentation](https://cyberbotics.com/doc/guide/index)
+- [NAO Robot Documentation](https://cyberbotics.com/doc/guide/nao)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [Next.js Documentation](https://nextjs.org/docs)
 
 ---
 
-**Ready to control NAO?**
-
-1. Open Webots and load `worlds/nao_office_demo.wbt`
-2. Click Play
-3. Click on the 3D view to focus
-4. Press **W** to walk, **A/D** to turn, **V** to wave!
-
-For technical documentation and customization, see [CLAUDE.md](CLAUDE.md)
-# klarix-humanoid-bot
+**Made with ❤️ for robotics education and research**

@@ -10,7 +10,7 @@ class RobotController:
 
     def __init__(self):
         self.connected = False
-        self.command_queue = asyncio.Queue()
+        self.webots_bridge = None
         self.current_state = {
             "gesture": None,
             "head_position": {"yaw": 0.0, "pitch": 0.0},
@@ -19,11 +19,22 @@ class RobotController:
         }
         self.subscribers: List[asyncio.Queue] = []
 
+    def set_bridge(self, bridge):
+        """Set the Webots bridge instance"""
+        self.webots_bridge = bridge
+        bridge.register_status_callback(self._handle_webots_status)
+
     async def connect(self):
         """Connect to robot/simulation"""
-        # This will be implemented to connect to Webots via socket or shared memory
         self.connected = True
-        print("Robot controller connected")
+        print("✓ Robot controller ready")
+
+    async def _handle_webots_status(self, status: Dict):
+        """Handle status updates from Webots"""
+        # Update current state from Webots
+        self.current_state.update(status)
+        # Notify subscribers
+        await self._notify_subscribers()
 
     async def disconnect(self):
         """Disconnect from robot"""
@@ -32,22 +43,25 @@ class RobotController:
 
     async def send_gesture(self, gesture: str) -> Dict:
         """Send gesture command to robot"""
-        if not self.connected:
+        if not self.connected or not self.webots_bridge:
             return {"success": False, "error": "Not connected"}
 
         command = {
             "type": "gesture",
             "gesture": gesture
         }
-        await self.command_queue.put(command)
-        self.current_state["gesture"] = gesture
-        await self._notify_subscribers()
 
-        return {"success": True, "command": command}
+        success = await self.webots_bridge.send_command(command)
+        if success:
+            self.current_state["gesture"] = gesture
+            await self._notify_subscribers()
+            return {"success": True, "command": command}
+        else:
+            return {"success": False, "error": "Failed to send command to Webots"}
 
     async def move_head(self, direction: str) -> Dict:
         """Move robot head"""
-        if not self.connected:
+        if not self.connected or not self.webots_bridge:
             return {"success": False, "error": "Not connected"}
 
         direction_map = {
@@ -65,15 +79,17 @@ class RobotController:
             "position": position
         }
 
-        await self.command_queue.put(command)
-        self.current_state["head_position"] = position
-        await self._notify_subscribers()
-
-        return {"success": True, "command": command}
+        success = await self.webots_bridge.send_command(command)
+        if success:
+            self.current_state["head_position"] = position
+            await self._notify_subscribers()
+            return {"success": True, "command": command}
+        else:
+            return {"success": False, "error": "Failed to send command to Webots"}
 
     async def walk(self, movement: str, duration: float = 2.0) -> Dict:
         """Execute walking movement"""
-        if not self.connected:
+        if not self.connected or not self.webots_bridge:
             return {"success": False, "error": "Not connected"}
 
         command = {
@@ -82,16 +98,13 @@ class RobotController:
             "duration": duration
         }
 
-        await self.command_queue.put(command)
-        self.current_state["is_moving"] = True
-        await self._notify_subscribers()
-
-        # Simulate movement completion
-        await asyncio.sleep(duration)
-        self.current_state["is_moving"] = False
-        await self._notify_subscribers()
-
-        return {"success": True, "command": command}
+        success = await self.webots_bridge.send_command(command)
+        if success:
+            self.current_state["is_moving"] = True
+            await self._notify_subscribers()
+            return {"success": True, "command": command}
+        else:
+            return {"success": False, "error": "Failed to send command to Webots"}
 
     async def set_motor_position(self, motor_name: str, position: float) -> Dict:
         """Set individual motor position"""
