@@ -1,5 +1,6 @@
 """Robot control API endpoints"""
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import StreamingResponse
 from typing import Dict
 import json
 
@@ -12,6 +13,7 @@ from app.models.robot import (
     RobotStatus
 )
 from app.services.robot_controller import robot_controller
+from app.services.camera_streamer import camera_streamer
 
 router = APIRouter(prefix="/api/robot", tags=["robot"])
 
@@ -106,3 +108,23 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket error: {e}")
         await robot_controller.unsubscribe(queue)
+
+
+@router.get("/camera/stream")
+async def camera_stream():
+    """Stream MJPEG video from robot camera"""
+    return StreamingResponse(
+        camera_streamer.generate_mjpeg_stream(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+@router.get("/camera/status")
+async def camera_status():
+    """Get camera streaming status (for debugging)"""
+    has_frame = await camera_streamer.get_frame() is not None
+    return {
+        "has_frame": has_frame,
+        "subscribers": len(camera_streamer.subscribers),
+        "message": "Camera streaming active" if has_frame else "No frames received yet"
+    }

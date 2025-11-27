@@ -8,6 +8,7 @@ Full-stack web application for controlling a NAO humanoid robot in Webots simula
 
 - **Modern Web Interface** - Control NAO robot from your browser
 - **Real-time Updates** - WebSocket-based live status updates
+- **Live Camera Feed** - Stream NAO's camera view directly in the UI
 - **Gesture Control** - Wave, point, and standing poses
 - **Head Movement** - Up, down, left, right controls
 - **Walking Movements** - Forward, backward, turning
@@ -76,6 +77,7 @@ klarix-humanoid-bot/
 - **Webots R2023b** - [Download](https://github.com/cyberbotics/webots/releases/tag/R2023b)
 - **Python 3.8+** - For backend
 - **Node.js 18+** - For frontend
+- **Pillow** - For camera streaming: `pip install pillow`
 
 ### Installation
 
@@ -124,7 +126,7 @@ Wait for:
 ✓ Ready to receive commands from web interface!
 ```
 
-#### Terminal 3: Frontend (Optional - for UI)
+#### Terminal 3: Frontend
 ```bash
 cd frontend
 npm run dev
@@ -195,11 +197,12 @@ ws.onmessage = (event) => {
 | POST | `/api/robot/gesture` | Execute gesture (wave, point, stand) |
 | POST | `/api/robot/head/move` | Move head (up, down, left, right) |
 | POST | `/api/robot/walk` | Walk (forward, backward, turn_left, turn_right) |
-| POST | `/api/robot/motor` | Set single motor position |
-| POST | `/api/robot/motors` | Set multiple motor positions |
 | GET | `/api/robot/status` | Get current robot status |
+| GET | `/api/robot/camera/stream` | Stream MJPEG video from robot camera |
 | POST | `/api/robot/connect` | Connect to robot |
 | POST | `/api/robot/disconnect` | Disconnect from robot |
+
+For camera streaming details, see [CAMERA.md](CAMERA.md).
 
 ### WebSocket
 
@@ -208,6 +211,18 @@ ws.onmessage = (event) => {
 - **Message Format**: JSON
 
 ## 🛠️ Troubleshooting
+
+### Camera shows black screen
+
+```bash
+# Quick test
+python test_camera_setup.py
+
+# Most common fix
+pip install pillow
+```
+
+**See [CAMERA.md](CAMERA.md)** for detailed camera troubleshooting.
 
 ### Backend won't start
 ```bash
@@ -266,24 +281,20 @@ const newGesture = {
 ## 📊 Communication Flow
 
 ```
-1. User clicks "Wave" button
-   ↓
-2. Frontend → POST http://localhost:8000/api/robot/gesture
-   ↓
-3. Backend receives REST request
-   ↓
-4. Backend → TCP Socket (port 10020) → Webots Controller
-   ↓
-5. Webots Controller executes motor commands
-   ↓
-6. NAO Robot moves in simulation
-   ↓
-7. Webots Controller → Status → Backend
-   ↓
-8. Backend → WebSocket → Frontend
-   ↓
-9. Frontend updates UI in real-time
+User (Browser) → Frontend (Next.js:3000)
+                      ↓
+                 REST + WebSocket
+                      ↓
+              Backend (FastAPI:8000)
+                      ↓
+                TCP Socket :10020
+                      ↓
+        Webots Controller (Python) → NAO Robot
 ```
+
+**Control:** Frontend → Backend → Webots → Robot movement
+**Status:** Robot → Webots → Backend → Frontend (WebSocket)
+**Camera:** Robot camera → Webots → Backend → Frontend (MJPEG stream)
 
 ## 🤝 Contributing
 

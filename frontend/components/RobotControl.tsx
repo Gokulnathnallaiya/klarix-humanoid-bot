@@ -193,32 +193,59 @@ export default function RobotControl() {
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 text-white">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Camera feed</p>
+            <p className="text-sm font-semibold">NAO's Camera View</p>
             <div className="flex items-center gap-2 text-xs text-slate-300">
               <Camera className="h-4 w-4" />
-              {cameraReady ? 'Live' : 'Not configured'}
+              {cameraReady ? 'Live' : 'Waiting for frames'}
             </div>
           </div>
           {cameraReady ? (
             <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black">
-              <video
+              <img
                 key={CAMERA_FEED_URL}
                 src={CAMERA_FEED_URL}
-                className="h-full w-full"
-                autoPlay
-                muted
-                playsInline
-                controls
+                alt="NAO Robot Camera Feed"
+                className="h-full w-full object-contain"
                 onError={() => setCameraError(true)}
-                onLoadedData={() => setCameraError(false)}
+                onLoad={() => setCameraError(false)}
               />
+              <div className="px-3 py-2 text-xs text-slate-400 bg-slate-900/80">
+                What NAO sees • 320x240 @ ~5 FPS
+              </div>
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border border-dashed border-white/20 bg-slate-900/60 p-6 text-sm text-slate-300">
-              Set <code className="rounded bg-slate-800 px-1 py-0.5 text-xs">NEXT_PUBLIC_CAMERA_FEED_URL</code> and restart the
-              frontend to view the Webots render or NAO stream.
+              {cameraError ? (
+                <div className="space-y-2">
+                  <p className="text-amber-400">⚠ Camera stream unavailable</p>
+                  <p>Check Webots console for:</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs">
+                    <li>✓ PIL/Pillow available</li>
+                    <li>✓ Camera enabled (320x240)</li>
+                    <li>✓ Connected to backend</li>
+                  </ul>
+                  <p className="text-xs pt-2">
+                    Install PIL: <code className="rounded bg-slate-800 px-1 py-0.5">pip install pillow</code>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p>Waiting for camera frames...</p>
+                  <p className="text-xs text-slate-400">
+                    Make sure Webots simulation is running
+                  </p>
+                </div>
+              )}
             </div>
           )}
+
+          <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-100">
+            <p className="font-semibold text-cyan-300 mb-2">💡 Environment View</p>
+            <p className="text-xs text-slate-300">
+              To see the robot moving in the office environment, check the <strong>Webots simulation window</strong>.
+              The camera follows NAO automatically as it moves around!
+            </p>
+          </div>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">

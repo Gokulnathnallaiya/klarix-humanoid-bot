@@ -2,6 +2,7 @@
 from controller import Robot, Motion
 import sys
 import time
+import base64
 from backend_client import BackendClient
 
 # Initialize robot
@@ -33,9 +34,19 @@ print(f"✓ Initialized {len(motors)} motors")
 camera = robot.getDevice('CameraTop')
 display = robot.getDevice('camera_display')
 
+# Check PIL availability early
+PIL_AVAILABLE = False
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+    print("✓ PIL/Pillow available for camera streaming")
+except ImportError:
+    print("⚠ PIL/Pillow not available - camera streaming disabled")
+    print("  Install with: pip install pillow")
+
 if camera:
     camera.enable(timestep)
-    print("✓ Camera enabled")
+    print(f"✓ Camera enabled ({camera.getWidth()}x{camera.getHeight()})")
 else:
     print("✗ Camera not found")
 
@@ -206,14 +217,58 @@ if backend.connect():
 
     # Status update counter
     status_counter = 0
+    # Camera frame counter (send frames less frequently)
+    camera_counter = 0
 
     # Main control loop
     while robot.step(timestep) != -1:
-        # Update camera display
-        if camera and display:
+        # Update camera display and capture frames
+        if camera:
             camera_image = camera.getImage()
             if camera_image:
-                display.imagepaste(camera_image, 0, 0)
+                # Display in Webots if display available
+                if display:
+                    display.imagepaste(camera_image, 0, 0)
+
+                # Send camera frames to web interface if PIL is available
+                if PIL_AVAILABLE:
+                    camera_counter += 1
+                    if camera_counter >= 10:  # Send every 10 steps (~5 FPS)
+                        try:
+                            # Get camera dimensions
+                            width = camera.getWidth()
+                            height = camera.getHeight()
+
+                            # Convert camera image to JPEG
+                            # Webots returns BGRA format, convert to RGB
+                            import io
+                            from PIL import Image
+
+                            # Create PIL Image from raw camera data
+                            img = Image.frombytes('RGBA', (width, height), camera_image, 'raw', 'BGRA')
+                            # Convert to RGB
+                            img_rgb = img.convert('RGB')
+                            # Encode as JPEG
+                            buffer = io.BytesIO()
+                            img_rgb.save(buffer, format='JPEG', quality=85)
+                            jpeg_data = buffer.getvalue()
+
+                            # Encode to base64 and send to backend
+                            frame_b64 = base64.b64encode(jpeg_data).decode('utf-8')
+                            success = backend.send_status({
+                                "type": "camera_frame",
+                                "frame": frame_b64
+                            })
+
+                            if not success:
+                                print("⚠ Failed to send camera frame to backend")
+
+                        except Exception as e:
+                            print(f"⚠ Error encoding camera frame: {e}")
+                            import traceback
+                            traceback.print_exc()
+
+                        camera_counter = 0
 
         # Send status updates every 100 steps (~2 seconds)
         status_counter += 1

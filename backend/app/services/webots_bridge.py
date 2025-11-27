@@ -1,6 +1,7 @@
 """WebSocket bridge for communicating with Webots controller"""
 import asyncio
 import json
+import base64
 from typing import Optional, Dict
 import logging
 
@@ -100,12 +101,35 @@ class WebotsBridge:
 
     async def _handle_status_update(self, status: Dict):
         """Handle status update from Webots"""
-        logger.debug(f"Received status from Webots: {status}")
-        for callback in self.status_callbacks:
+        # Check if this is a camera frame
+        if status.get("type") == "camera_frame":
             try:
-                await callback(status)
+                # Import here to avoid circular dependency
+                from app.services.camera_streamer import camera_streamer
+
+                # Decode base64 frame data
+                frame_b64 = status.get("frame", "")
+                if frame_b64:
+                    frame_data = base64.b64decode(frame_b64)
+                    if frame_data:
+                        await camera_streamer.update_frame(frame_data)
+                        logger.info(f"✓ Received camera frame from Webots ({len(frame_data)} bytes)")
+                    else:
+                        logger.warning("Received empty frame data after decoding")
+                else:
+                    logger.warning("Received camera_frame message with no frame data")
             except Exception as e:
-                logger.error(f"Error in status callback: {e}")
+                logger.error(f"✗ Error processing camera frame: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        else:
+            # Regular status update
+            logger.debug(f"Received status from Webots: {status}")
+            for callback in self.status_callbacks:
+                try:
+                    await callback(status)
+                except Exception as e:
+                    logger.error(f"Error in status callback: {e}")
 
     def register_status_callback(self, callback):
         """Register a callback for status updates"""
