@@ -29,6 +29,21 @@ for name in motor_names:
 
 print(f"✓ Initialized {len(motors)} motors")
 
+# Initialize camera and display
+camera = robot.getDevice('CameraTop')
+display = robot.getDevice('camera_display')
+
+if camera:
+    camera.enable(timestep)
+    print("✓ Camera enabled")
+else:
+    print("✗ Camera not found")
+
+if display:
+    print("✓ Display found")
+else:
+    print("✗ Display not found")
+
 # Current state
 current_state = {
     "connected": True,
@@ -194,6 +209,12 @@ if backend.connect():
 
     # Main control loop
     while robot.step(timestep) != -1:
+        # Update camera display
+        if camera and display:
+            camera_image = camera.getImage()
+            if camera_image:
+                display.imagepaste(camera_image, 0, 0)
+
         # Send status updates every 100 steps (~2 seconds)
         status_counter += 1
         if status_counter >= 100:
@@ -211,4 +232,8 @@ else:
     # Fallback: run standing pose indefinitely
     standing_pose()
     while robot.step(timestep) != -1:
-        pass
+        # Update camera display in standalone mode too
+        if camera and display:
+            camera_image = camera.getImage()
+            if camera_image:
+                display.imagepaste(camera_image, 0, 0)

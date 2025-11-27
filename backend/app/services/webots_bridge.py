@@ -17,12 +17,15 @@ class WebotsBridge:
         self.client_writer: Optional[asyncio.StreamWriter] = None
         self.client_reader: Optional[asyncio.StreamReader] = None
         self.connected = False
-        self.command_queue = asyncio.Queue()
+        self.command_queue: Optional[asyncio.Queue] = None
         self.status_callbacks = []
 
     async def start_server(self):
         """Start TCP server to accept Webots controller connection"""
         try:
+            # Create the command queue in the running event loop
+            self.command_queue = asyncio.Queue()
+
             self.server = await asyncio.start_server(
                 self._handle_client,
                 self.host,
@@ -81,6 +84,10 @@ class WebotsBridge:
         """Send commands from queue to Webots controller"""
         while True:
             try:
+                if not self.command_queue:
+                    await asyncio.sleep(0.1)
+                    continue
+
                 command = await self.command_queue.get()
                 if self.client_writer and not self.client_writer.is_closing():
                     message = json.dumps(command) + "\n"
@@ -89,6 +96,7 @@ class WebotsBridge:
                     logger.debug(f"Sent command to Webots: {command}")
             except Exception as e:
                 logger.error(f"Error sending command to Webots: {e}")
+                await asyncio.sleep(0.1)
 
     async def _handle_status_update(self, status: Dict):
         """Handle status update from Webots"""
@@ -107,6 +115,10 @@ class WebotsBridge:
         """Queue a command to be sent to Webots"""
         if not self.connected:
             logger.warning("Cannot send command: Webots not connected")
+            return False
+
+        if not self.command_queue:
+            logger.warning("Cannot send command: Command queue not initialized")
             return False
 
         await self.command_queue.put(command)
