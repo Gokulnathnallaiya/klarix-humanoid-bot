@@ -1,332 +1,135 @@
-# 🤖 NAO Robot Web Control System
+# NAO Humanoid Robot - Office Assistant Demo
 
-Full-stack web application for controlling a NAO humanoid robot in Webots simulation through an intuitive web interface.
+Full-stack web control system for NAO humanoid robot in Webots simulation environment.
 
-![NAO Robot](nao_office_demo.png)
+## Overview
 
-## 🎯 Features
+This project demonstrates a NAO robot functioning as an intelligent office assistant with advanced perception capabilities and web-based control interface.
 
-- **Modern Web Interface** - Control NAO robot from your browser
-- **Real-time Updates** - WebSocket-based live status updates
-- **Live Camera Feed** - Stream NAO's camera view directly in the UI
-- **Gesture Control** - Wave, point, and standing poses
-- **Head Movement** - Up, down, left, right controls
-- **Walking Movements** - Forward, backward, turning
-- **RESTful API** - Complete API for robot control
-- **Responsive Design** - Works on desktop and mobile
+## Features
 
-## 🏗️ Architecture
+### S2 - Perception & Sensing
+- **IMU Sensors** - Real-time orientation and motion tracking
+- **360° LIDAR** - Environmental scanning with 5m range
+- **RealSense Depth Camera** - RGB + Depth sensing (640x480)
+- **Odometry** - Position tracking with velocity estimation
 
-```
-Frontend (Next.js + React)  →  Backend (FastAPI)  →  Webots Simulator
-    Port 3000                    Port 8000/10020        NAO Robot
+### S3 - Control & Interaction
+- **Arm Joint Control** - Individual motor control for both arms
+- **Gesture Animations** - Wave, point, stand, sit behaviors
+- **Head Movement** - Pan and tilt control
+- **Walking System** - Forward, backward, turn left/right with motion files
 
-         ↓                            ↓                      ↓
-    User Interface          REST API + WebSocket      Physics Simulation
-```
-
-### Technology Stack
-
-- **Frontend**: Next.js 15, React 18, TypeScript, Tailwind CSS
-- **Backend**: Python FastAPI, WebSockets, Pydantic
-- **Simulation**: Webots R2023b, NAO Robot Model
-- **Communication**: REST API, WebSocket, TCP Sockets
-
-## 📁 Project Structure
+## Architecture
 
 ```
 klarix-humanoid-bot/
-├── frontend/                   # Next.js React application
-│   ├── app/                   # Next.js app directory
-│   │   ├── page.tsx          # Home page
-│   │   ├── layout.tsx        # Root layout
-│   │   └── globals.css       # Global styles
-│   ├── components/           # React components
-│   │   └── RobotControl.tsx  # Main control interface
-│   └── package.json          # Frontend dependencies
-│
-├── backend/                   # FastAPI backend
-│   ├── app/
-│   │   ├── main.py           # FastAPI application
-│   │   ├── api/
-│   │   │   └── robot.py      # API endpoints
-│   │   ├── models/
-│   │   │   └── robot.py      # Pydantic models
-│   │   └── services/
-│   │       ├── robot_controller.py   # Robot control logic
-│   │       └── webots_bridge.py      # Webots communication
-│   └── requirements.txt      # Python dependencies
-│
-├── webots/                    # Webots simulation
-│   ├── worlds/
-│   │   └── nao_office_demo.wbt      # Office environment
-│   └── controllers/
-│       └── nao_office_assistant/
-│           ├── nao_office_assistant.py   # Main controller
-│           └── backend_client.py          # Backend communication
-│
-├── README.md                  # This file
-├── CLAUDE.md                  # AI assistant context
-└── .gitignore                 # Git ignore rules
+├── backend/           # FastAPI server (Python)
+│   └── app/
+│       ├── api/       # REST endpoints
+│       ├── models/    # Pydantic data models
+│       └── services/  # Robot controller & bridge
+├── frontend/          # Next.js 15 + React 18 (TypeScript)
+│   ├── app/           # Next.js app directory
+│   └── components/    # React components
+└── webots/
+    ├── controllers/   # NAO controller (Python)
+    └── worlds/        # Simulation environment
 ```
 
-## 🚀 Quick Start
+## Tech Stack
+
+**Backend:**
+- FastAPI (async Python web framework)
+- WebSocket for real-time status updates
+- MJPEG camera streaming
+
+**Frontend:**
+- Next.js 15 with App Router
+- React 18 with TypeScript
+- Tailwind CSS for styling
+- Real-time sensor visualization
+
+**Simulation:**
+- Webots R2023b
+- NAO robot model (SoftBank Robotics)
+- Office environment with Bosch branding
+
+## Setup
 
 ### Prerequisites
+- Webots R2023b
+- Python 3.8+
+- Node.js 18+
 
-- **Webots R2023b** - [Download](https://github.com/cyberbotics/webots/releases/tag/R2023b)
-- **Python 3.8+** - For backend
-- **Node.js 18+** - For frontend
-- **Pillow** - For camera streaming: `pip install pillow`
-
-### Installation
-
-**1. Clone Repository**
-```bash
-git clone https://github.com/Gokulnathnallaiya/klarix-humanoid-bot.git
-cd klarix-humanoid-bot
-```
-
-**2. Install Backend Dependencies**
+### Backend Setup
 ```bash
 cd backend
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**3. Install Frontend Dependencies**
+### Frontend Setup
 ```bash
 cd frontend
 npm install
-```
-
-### Running the Application
-
-**IMPORTANT: Start services in this order:**
-
-#### Terminal 1: Backend Server
-```bash
-cd backend
-python -m app.main
-```
-
-Wait for:
-```
-✓ Webots bridge listening on localhost:10020
-✓ Backend ready - Waiting for Webots controller connection...
-```
-
-#### Terminal 2: Webots Simulation
-```bash
-webots webots/worlds/nao_office_demo.wbt
-```
-
-Wait for:
-```
-✓ Connected to backend at localhost:10020
-✓ Ready to receive commands from web interface!
-```
-
-#### Terminal 3: Frontend
-```bash
-cd frontend
 npm run dev
 ```
 
-### Access Points
+### Webots Setup
+1. Open Webots R2023b
+2. Open world file: `webots/worlds/nao_office_demo.wbt`
+3. Press Play to start simulation
+4. Controller automatically connects to backend
 
-- **Web Interface**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs
-- **API Health Check**: http://localhost:8000/health
+## Usage
 
-## 🎮 Usage
+1. Start backend server (port 8000)
+2. Start frontend (port 3000)
+3. Start Webots simulation
+4. Open browser: `http://localhost:3000`
 
-### Web Interface
+### Controls
+- **Gestures** - Wave, Point, Stand, Sit
+- **Head Movement** - Left, Right, Up, Down, Center
+- **Walking** - Forward, Backward, Turn Left, Turn Right
+- **Motor Control** - Individual joint position control
 
-1. Open http://localhost:3000 in your browser
-2. Verify both indicators are green (Backend + Robot)
-3. Click control buttons:
-   - **Purple buttons**: Gestures (Wave, Point, Stand)
-   - **Blue buttons**: Head movements
-   - **Green buttons**: Walking movements
+### Real-time Monitoring
+- Live camera feed (MJPEG stream)
+- IMU data (accelerometer + gyroscope)
+- LIDAR visualization (360° radar)
+- Depth camera heatmap
+- Odometry tracking
+- Robot status indicators
 
-### API Usage
+## API Endpoints
 
-**Gesture Control:**
-```bash
-curl -X POST http://localhost:8000/api/robot/gesture \
-  -H "Content-Type: application/json" \
-  -d '{"gesture": "wave"}'
-```
+- `POST /api/robot/gesture` - Execute gesture
+- `POST /api/robot/head/move` - Move head
+- `POST /api/robot/walk` - Walking movement
+- `POST /api/robot/motor` - Single motor control
+- `POST /api/robot/motors` - Batch motor control
+- `GET /api/robot/status` - Current status
+- `WS /api/robot/ws` - WebSocket status stream
+- `GET /api/robot/camera/stream` - MJPEG camera feed
 
-**Head Movement:**
-```bash
-curl -X POST http://localhost:8000/api/robot/head/move \
-  -H "Content-Type: application/json" \
-  -d '{"direction": "left"}'
-```
+## Environment
 
-**Walking:**
-```bash
-curl -X POST http://localhost:8000/api/robot/walk \
-  -H "Content-Type: application/json" \
-  -d '{"movement": "forward", "duration": 2.0}'
-```
+Office simulation includes:
+- Desks, chairs, and monitors
+- Conference table
+- Coffee station
+- Filing cabinets and bookshelves
+- Bosch branding panels on all walls
+- Proper lighting setup
 
-**Get Status:**
-```bash
-curl http://localhost:8000/api/robot/status
-```
+## License
 
-### WebSocket Real-time Updates
+Bosch Internal Project
 
-```javascript
-const ws = new WebSocket('ws://localhost:8000/api/robot/ws');
+## Contributors
 
-ws.onmessage = (event) => {
-  const status = JSON.parse(event.data);
-  console.log('Robot status:', status);
-};
-```
-
-## 🔧 API Reference
-
-### REST Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/robot/gesture` | Execute gesture (wave, point, stand) |
-| POST | `/api/robot/head/move` | Move head (up, down, left, right) |
-| POST | `/api/robot/walk` | Walk (forward, backward, turn_left, turn_right) |
-| GET | `/api/robot/status` | Get current robot status |
-| GET | `/api/robot/camera/stream` | Stream MJPEG video from robot camera |
-| POST | `/api/robot/connect` | Connect to robot |
-| POST | `/api/robot/disconnect` | Disconnect from robot |
-
-For camera streaming details, see [CAMERA.md](CAMERA.md).
-
-### WebSocket
-
-- **Endpoint**: `ws://localhost:8000/api/robot/ws`
-- **Purpose**: Real-time status updates
-- **Message Format**: JSON
-
-## 🛠️ Troubleshooting
-
-### Camera shows black screen
-
-```bash
-# Quick test
-python test_camera_setup.py
-
-# Most common fix
-pip install pillow
-```
-
-**See [CAMERA.md](CAMERA.md)** for detailed camera troubleshooting.
-
-### Backend won't start
-```bash
-# Check if ports are in use
-lsof -i :8000
-lsof -i :10020
-
-# Kill processes using these ports
-kill -9 <PID>
-```
-
-### Webots controller can't connect
-- ✅ Ensure backend started **before** Webots
-- ✅ Check backend shows "Waiting for Webots controller connection..."
-- ✅ Restart Webots simulation (`Ctrl+Shift+R`)
-
-### Frontend shows "Backend not connected"
-- ✅ Backend must be running on port 8000
-- ✅ Check: http://localhost:8000/docs
-- ✅ Look for CORS errors in browser console
-
-### Robot doesn't move
-- ✅ Check Webots console for connection message
-- ✅ Verify both green indicators in web UI
-- ✅ Check backend terminal for command logs
-
-## 🧪 Development
-
-### Adding New Gestures
-
-**Backend** (`backend/app/services/robot_controller.py`):
-```python
-async def new_gesture(self, gesture_name: str) -> Dict:
-    command = {"type": "gesture", "gesture": gesture_name}
-    return await self.webots_bridge.send_command(command)
-```
-
-**Webots Controller** (`webots/controllers/nao_office_assistant/nao_office_assistant.py`):
-```python
-def new_gesture():
-    motors['RShoulderPitch'].setVelocity(3.0)
-    motors['RShoulderPitch'].setPosition(0.5)
-    # Add motor commands...
-```
-
-**Frontend** (`frontend/components/RobotControl.tsx`):
-```typescript
-const newGesture = {
-  name: 'New Gesture',
-  value: 'new_gesture',
-  icon: IconName,
-  color: 'bg-purple-500 hover:bg-purple-600'
-};
-```
-
-## 📊 Communication Flow
-
-```
-User (Browser) → Frontend (Next.js:3000)
-                      ↓
-                 REST + WebSocket
-                      ↓
-              Backend (FastAPI:8000)
-                      ↓
-                TCP Socket :10020
-                      ↓
-        Webots Controller (Python) → NAO Robot
-```
-
-**Control:** Frontend → Backend → Webots → Robot movement
-**Status:** Robot → Webots → Backend → Frontend (WebSocket)
-**Camera:** Robot camera → Webots → Backend → Frontend (MJPEG stream)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is open source and available under the MIT License.
-
-## 🙏 Acknowledgments
-
-- **Webots** - Robot simulation software by Cyberbotics
-- **NAO Robot** - Humanoid robot by SoftBank Robotics
-- **FastAPI** - Modern web framework for Python
-- **Next.js** - React framework for production
-
-## 📧 Contact
-
-- **Repository**: https://github.com/Gokulnathnallaiya/klarix-humanoid-bot
-- **Issues**: https://github.com/Gokulnathnallaiya/klarix-humanoid-bot/issues
-
-## 🎓 Learning Resources
-
-- [Webots Documentation](https://cyberbotics.com/doc/guide/index)
-- [NAO Robot Documentation](https://cyberbotics.com/doc/guide/nao)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Next.js Documentation](https://nextjs.org/docs)
-
----
-
-**Made with ❤️ for robotics education and research**
+Bosch Robotics Team

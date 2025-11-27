@@ -30,6 +30,8 @@ class NAOController:
         self.inertial_unit = None
         self.accelerometer = None
         self.gyro = None
+        self.lidar = None
+        self.depth_camera = None
 
         # Motion references
         self.forward_motion = None
@@ -45,6 +47,26 @@ class NAOController:
             "imu": {
                 "accelerometer": {"x": 0.0, "y": 0.0, "z": 0.0},
                 "gyroscope": {"x": 0.0, "y": 0.0, "z": 0.0}
+            },
+            "lidar": {
+                "ranges": [],
+                "min_range": 0.1,
+                "max_range": 5.0,
+                "num_points": 360
+            },
+            "depth_camera": {
+                "width": 640,
+                "height": 480,
+                "min_range": 0.15,
+                "max_range": 10.0,
+                "depth_data": []
+            },
+            "odometry": {
+                "x": 0.0,
+                "y": 0.0,
+                "theta": 0.0,
+                "linear_velocity": 0.0,
+                "angular_velocity": 0.0
             }
         }
 
@@ -64,6 +86,8 @@ class NAOController:
         self._init_motors()
         self._init_camera()
         self._init_imu()
+        self._init_lidar()
+        self._init_depth_camera()
         self._init_motions()
 
     def _init_motors(self):
@@ -130,6 +154,30 @@ class NAOController:
                 print("✓ Gyroscope enabled")
             else:
                 print("✗ Gyroscope not found")
+
+    def _init_lidar(self):
+        """Initialize LIDAR sensor"""
+        self.lidar = self.robot.getDevice('lidar')
+
+        if self.lidar:
+            self.lidar.enable(self.timestep)
+            self.lidar.enablePointCloud()
+            print(f"✓ LIDAR enabled (360° @ {self.lidar.getHorizontalResolution()} points)")
+        else:
+            print("✗ LIDAR not found")
+
+    def _init_depth_camera(self):
+        """Initialize RealSense depth camera (RangeFinder)"""
+        self.depth_camera = self.robot.getDevice('realsense_depth')
+
+        if self.depth_camera:
+            self.depth_camera.enable(self.timestep)
+            width = self.depth_camera.getWidth()
+            height = self.depth_camera.getHeight()
+            fov = self.depth_camera.getFov()
+            print(f"✓ RealSense depth camera enabled ({width}x{height}, FOV: {fov:.2f} rad)")
+        else:
+            print("✗ RealSense depth camera not found")
 
     def _init_motions(self):
         """Load motion files"""
@@ -250,6 +298,51 @@ class NAOController:
         except Exception as e:
             print(f"⚠ Error reading IMU: {e}")
 
+    def read_lidar_data(self):
+        """Read LIDAR sensor data and update state"""
+        if not self.lidar:
+            return
+
+        try:
+            range_image = self.lidar.getRangeImage()
+            if range_image and len(range_image) > 0:
+                # Store LIDAR ranges (convert to list for JSON serialization)
+                self.current_state["lidar"]["ranges"] = [
+                    round(float(r), 3) if r != float('inf') else self.current_state["lidar"]["max_range"]
+                    for r in range_image
+                ]
+                self.current_state["lidar"]["num_points"] = len(range_image)
+        except Exception as e:
+            print(f"⚠ Error reading LIDAR: {e}")
+
+    def read_depth_data(self):
+        """Read depth camera data and update state"""
+        if not self.depth_camera:
+            return
+
+        try:
+            range_image = self.depth_camera.getRangeImage()
+            if range_image and len(range_image) > 0:
+                # Downsample depth data for transmission (every 8th pixel for 80x60 resolution)
+                step = 8
+                width = self.depth_camera.getWidth()
+                height = self.depth_camera.getHeight()
+                downsampled = []
+
+                for y in range(0, height, step):
+                    for x in range(0, width, step):
+                        idx = y * width + x
+                        if idx < len(range_image):
+                            depth = range_image[idx]
+                            # Convert inf to max_range
+                            if depth == float('inf'):
+                                depth = self.current_state["depth_camera"]["max_range"]
+                            downsampled.append(round(float(depth), 3))
+
+                self.current_state["depth_camera"]["depth_data"] = downsampled
+        except Exception as e:
+            print(f"⚠ Error reading depth camera: {e}")
+
     def capture_and_send_camera_frame(self):
         """Capture camera frame and send to backend"""
         if not (self.camera and PIL_AVAILABLE):
@@ -312,6 +405,49 @@ class NAOController:
         elif cmd_type == "walk":
             self.execute_walking_motion(command.get("movement"))
 
+    def update_odometry(self, movement):
+        """Update odometry based on movement"""
+        import math
+
+        # Approximate movement distances (calibrated for NAO)
+        forward_distance = 0.04  # ~4cm per forward step
+        turn_angle = 1.047  # ~60 degrees in radians (TurnLeft60/TurnRight60)
+
+        theta = self.current_state["odometry"]["theta"]
+        x = self.current_state["odometry"]["x"]
+        y = self.current_state["odometry"]["y"]
+
+        if movement == "forward":
+            # Move forward in current heading
+            x += forward_distance * math.cos(theta)
+            y += forward_distance * math.sin(theta)
+            self.current_state["odometry"]["linear_velocity"] = forward_distance
+
+        elif movement == "backward":
+            # Move backward in current heading
+            x -= forward_distance * math.cos(theta)
+            y -= forward_distance * math.sin(theta)
+            self.current_state["odometry"]["linear_velocity"] = -forward_distance
+
+        elif movement == "turn_left":
+            # Rotate left (counterclockwise)
+            theta += turn_angle
+            # Normalize angle to [-pi, pi]
+            theta = math.atan2(math.sin(theta), math.cos(theta))
+            self.current_state["odometry"]["angular_velocity"] = turn_angle
+
+        elif movement == "turn_right":
+            # Rotate right (clockwise)
+            theta -= turn_angle
+            # Normalize angle to [-pi, pi]
+            theta = math.atan2(math.sin(theta), math.cos(theta))
+            self.current_state["odometry"]["angular_velocity"] = -turn_angle
+
+        # Update state
+        self.current_state["odometry"]["x"] = round(x, 3)
+        self.current_state["odometry"]["y"] = round(y, 3)
+        self.current_state["odometry"]["theta"] = round(theta, 3)
+
     def execute_walking_motion(self, movement):
         """Execute walking motion"""
         print(f"🚶 Walking: {movement}")
@@ -332,6 +468,9 @@ class NAOController:
         else:
             # Fallback
             self.robot.step(self.timestep * 20)
+
+        # Update odometry after motion completes
+        self.update_odometry(movement)
 
         self.current_state["is_moving"] = False
         print(f"✓ Finished: {movement}")
@@ -369,6 +508,8 @@ class NAOController:
             self.status_counter += 1
             if self.status_counter >= 100:
                 self.read_imu_data()
+                self.read_lidar_data()
+                self.read_depth_data()
                 self.backend.send_status(self.current_state)
                 self.status_counter = 0
 

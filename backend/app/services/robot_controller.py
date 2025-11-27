@@ -150,6 +150,26 @@ class RobotController:
             "imu": self.current_state.get("imu", {
                 "accelerometer": {"x": 0, "y": 0, "z": 0},
                 "gyroscope": {"x": 0, "y": 0, "z": 0}
+            }),
+            "lidar": self.current_state.get("lidar", {
+                "ranges": [],
+                "min_range": 0.1,
+                "max_range": 5.0,
+                "num_points": 0
+            }),
+            "depth_camera": self.current_state.get("depth_camera", {
+                "width": 640,
+                "height": 480,
+                "min_range": 0.15,
+                "max_range": 10.0,
+                "depth_data": []
+            }),
+            "odometry": self.current_state.get("odometry", {
+                "x": 0.0,
+                "y": 0.0,
+                "theta": 0.0,
+                "linear_velocity": 0.0,
+                "angular_velocity": 0.0
             })
         }
 

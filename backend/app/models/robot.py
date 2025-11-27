@@ -71,6 +71,32 @@ class IMUData(BaseModel):
     gyroscope: Dict[str, float]      # x, y, z in rad/s
 
 
+class LidarData(BaseModel):
+    """LIDAR sensor data"""
+    ranges: List[float]  # Distance readings in meters
+    min_range: float     # Minimum range in meters
+    max_range: float     # Maximum range in meters
+    num_points: int      # Number of scan points
+
+
+class DepthCameraData(BaseModel):
+    """RealSense depth camera data"""
+    width: int                    # Image width
+    height: int                   # Image height
+    min_range: float              # Minimum range in meters
+    max_range: float              # Maximum range in meters
+    depth_data: List[float]       # Downsampled depth values
+
+
+class OdometryData(BaseModel):
+    """Odometry data (position and velocity)"""
+    x: float                      # X position in meters
+    y: float                      # Y position in meters
+    theta: float                  # Orientation in radians
+    linear_velocity: float        # Linear velocity in m/s
+    angular_velocity: float       # Angular velocity in rad/s
+
+
 class RobotStatus(BaseModel):
     """Robot status response"""
     connected: bool
@@ -79,3 +105,6 @@ class RobotStatus(BaseModel):
     head_position: Optional[Dict[str, float]] = None
     motor_positions: Optional[Dict[str, float]] = None
     imu: Optional[IMUData] = None
+    lidar: Optional[LidarData] = None
+    depth_camera: Optional[DepthCameraData] = None
+    odometry: Optional[OdometryData] = None

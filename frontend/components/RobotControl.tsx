@@ -32,6 +32,26 @@ interface RobotStatus {
     accelerometer: { x: number; y: number; z: number }
     gyroscope: { x: number; y: number; z: number }
   }
+  lidar?: {
+    ranges: number[]
+    min_range: number
+    max_range: number
+    num_points: number
+  }
+  depth_camera?: {
+    width: number
+    height: number
+    min_range: number
+    max_range: number
+    depth_data: number[]
+  }
+  odometry?: {
+    x: number
+    y: number
+    theta: number
+    linear_velocity: number
+    angular_velocity: number
+  }
 }
 
 interface CommandLogEntry {
@@ -242,6 +262,177 @@ export default function RobotControl() {
                   <span className="text-slate-400">Z-axis:</span>
                   <span className="font-mono text-slate-200">{formatImuValue(status.imu?.gyroscope.z)} rad/s</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
+          <p className="text-sm font-semibold mb-4">Odometry (Position Tracking)</p>
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-4">
+              <div className="grid grid-cols-3 gap-4 text-xs">
+                <div className="space-y-1">
+                  <div className="text-slate-400">X Position</div>
+                  <div className="font-mono text-lg text-emerald-300">{(status.odometry?.x || 0).toFixed(2)}m</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-slate-400">Y Position</div>
+                  <div className="font-mono text-lg text-cyan-300">{(status.odometry?.y || 0).toFixed(2)}m</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-slate-400">Heading (θ)</div>
+                  <div className="font-mono text-lg text-purple-300">{(status.odometry?.theta || 0).toFixed(2)} rad</div>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-800/80 p-4">
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Linear Velocity:</span>
+                  <span className="font-mono text-slate-200">{(status.odometry?.linear_velocity || 0).toFixed(3)} m/s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Angular Velocity:</span>
+                  <span className="font-mono text-slate-200">{(status.odometry?.angular_velocity || 0).toFixed(3)} rad/s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold">LIDAR Sensor (360° Scan)</p>
+            <span className="text-xs text-slate-400">
+              {status.lidar?.num_points || 0} points • {status.lidar?.max_range || 5}m range
+            </span>
+          </div>
+
+          <div className="relative aspect-square w-full max-w-sm mx-auto">
+            <svg viewBox="0 0 300 300" className="w-full h-full">
+              {/* Background circles */}
+              <circle cx="150" cy="150" r="120" fill="none" stroke="rgba(148, 163, 184, 0.1)" strokeWidth="1" />
+              <circle cx="150" cy="150" r="90" fill="none" stroke="rgba(148, 163, 184, 0.1)" strokeWidth="1" />
+              <circle cx="150" cy="150" r="60" fill="none" stroke="rgba(148, 163, 184, 0.1)" strokeWidth="1" />
+              <circle cx="150" cy="150" r="30" fill="none" stroke="rgba(148, 163, 184, 0.1)" strokeWidth="1" />
+
+              {/* Center dot (robot) */}
+              <circle cx="150" cy="150" r="4" fill="#a78bfa" />
+
+              {/* LIDAR points */}
+              {status.lidar?.ranges && status.lidar.ranges.length > 0 && status.lidar.ranges.map((range, index) => {
+                const maxRange = status.lidar?.max_range || 5
+                const angle = (index / (status.lidar?.num_points || 360)) * 2 * Math.PI
+                const normalizedRange = Math.min(range / maxRange, 1)
+                const radius = normalizedRange * 120
+                const x = 150 + radius * Math.cos(angle - Math.PI / 2)
+                const y = 150 + radius * Math.sin(angle - Math.PI / 2)
+
+                // Color based on distance (red = close, green = far)
+                const color = range < 1 ? '#ef4444' : range < 2 ? '#f59e0b' : '#10b981'
+
+                return <circle key={index} cx={x} cy={y} r="1.5" fill={color} opacity="0.8" />
+              })}
+            </svg>
+
+            {/* Legend */}
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                <span className="text-slate-400">&lt;1m</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="text-slate-400">1-2m</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-slate-400">&gt;2m</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-semibold">RealSense Depth Camera</p>
+            <span className="text-xs text-slate-400">
+              {status.depth_camera?.width || 640}x{status.depth_camera?.height || 480} • {status.depth_camera?.max_range || 10}m range
+            </span>
+          </div>
+
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="aspect-[4/3] rounded-2xl border border-white/10 bg-slate-800/80 overflow-hidden">
+              {status.depth_camera?.depth_data && status.depth_camera.depth_data.length > 0 ? (
+                <canvas
+                  ref={(canvas) => {
+                    if (!canvas || !status.depth_camera?.depth_data) return
+                    const ctx = canvas.getContext('2d')
+                    if (!ctx) return
+
+                    const depthData = status.depth_camera.depth_data
+                    const maxRange = status.depth_camera.max_range || 10
+
+                    // Downsampled resolution (80x60 from 640x480 with step=8)
+                    const cols = Math.floor((status.depth_camera.width || 640) / 8)
+                    const rows = Math.floor((status.depth_camera.height || 480) / 8)
+
+                    canvas.width = cols
+                    canvas.height = rows
+
+                    const imageData = ctx.createImageData(cols, rows)
+
+                    for (let i = 0; i < depthData.length; i++) {
+                      const depth = depthData[i]
+                      const normalized = Math.min(depth / maxRange, 1)
+
+                      // Color map: close = blue/green, far = red/yellow
+                      let r, g, b
+                      if (normalized < 0.5) {
+                        // Close: blue to cyan
+                        r = 0
+                        g = Math.floor(normalized * 2 * 255)
+                        b = 255
+                      } else {
+                        // Far: cyan to red
+                        r = Math.floor((normalized - 0.5) * 2 * 255)
+                        g = Math.floor((1 - normalized) * 2 * 255)
+                        b = Math.floor((1 - normalized) * 2 * 255)
+                      }
+
+                      const idx = i * 4
+                      imageData.data[idx] = r
+                      imageData.data[idx + 1] = g
+                      imageData.data[idx + 2] = b
+                      imageData.data[idx + 3] = 255
+                    }
+
+                    ctx.putImageData(imageData, 0, 0)
+                  }}
+                  className="w-full h-full"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">
+                  Waiting for depth data...
+                </div>
+              )}
+            </div>
+
+            {/* Legend */}
+            <div className="mt-3 flex items-center justify-center gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
+                <span className="text-slate-400">Close</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-cyan-500"></div>
+                <span className="text-slate-400">Mid</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-red-500"></div>
+                <span className="text-slate-400">Far</span>
               </div>
             </div>
           </div>

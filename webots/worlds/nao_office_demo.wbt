@@ -109,6 +109,82 @@ Wall {
   }
 }
 
+# Bosch Logo Panels (Brand Identity)
+# North Wall Logo
+Solid {
+  translation 0 4.88 1.8
+  rotation 0 0 1 1.5708
+  children [
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "textures/bosch-logo.png" ]
+        }
+      }
+      geometry Box {
+        size 0.02 1.6 1.0
+      }
+    }
+  ]
+  name "bosch_logo_north"
+}
+
+# South Wall Logo
+Solid {
+  translation 0 -4.88 1.8
+  rotation 0 0 1 1.5708
+  children [
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "textures/bosch-logo.png" ]
+        }
+      }
+      geometry Box {
+        size 0.02 1.6 1.0
+      }
+    }
+  ]
+  name "bosch_logo_south"
+}
+
+# East Wall Logo
+Solid {
+  translation 4.88 0 1.8
+  children [
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "textures/bosch-logo.png" ]
+        }
+      }
+      geometry Box {
+        size 0.02 1.6 1.0
+      }
+    }
+  ]
+  name "bosch_logo_east"
+}
+
+# West Wall Logo
+Solid {
+  translation -4.88 0 1.8
+  rotation 0 0 1 3.14159
+  children [
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "textures/bosch-logo.png" ]
+        }
+      }
+      geometry Box {
+        size 0.02 1.6 1.0
+      }
+    }
+  ]
+  name "bosch_logo_west"
+}
+
 # Work Area 1 - Main Desk
 Table {
   translation 3 2.5 0
@@ -418,6 +494,28 @@ Nao {
   cameraWidth 320
   cameraHeight 240
   supervisor TRUE
+  headSlot [
+    Lidar {
+      translation 0 0 0.05
+      rotation 0 1 0 0
+      horizontalResolution 360
+      fieldOfView 6.28
+      numberOfLayers 1
+      minRange 0.1
+      maxRange 5.0
+      name "lidar"
+    }
+    RangeFinder {
+      translation 0 0.03 0.05
+      rotation 0 1 0 0
+      fieldOfView 1.047
+      width 640
+      height 480
+      minRange 0.15
+      maxRange 10.0
+      name "realsense_depth"
+    }
+  ]
 }
 
 # Display for robot's camera view
