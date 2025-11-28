@@ -1,135 +1,257 @@
-# NAO Humanoid Robot - Office Assistant Demo
+# 🤖 NAO Humanoid Robot - Office Assistant with AI Vision
 
-Full-stack web control system for NAO humanoid robot in Webots simulation environment.
+Full-stack web control system for NAO humanoid robot in Webots simulation with **Azure OpenAI GPT-4 Vision** integration.
 
-## Overview
+---
 
-This project demonstrates a NAO robot functioning as an intelligent office assistant with advanced perception capabilities and web-based control interface.
+## ✨ Features
 
-## Features
+### 🎯 Core Capabilities
+- 🕹️ **Web-based control** - Next.js dashboard with real-time updates
+- 🎭 **Gesture animations** - Wave, point, stand, sit
+- 🚶 **Walking controls** - Forward, backward, turn left/right
+- 👀 **Head movement** - 5-direction pan/tilt control
+- 🦾 **24 motor control** - Individual joint positioning
 
-### S2 - Perception & Sensing
-- **IMU Sensors** - Real-time orientation and motion tracking
-- **360° LIDAR** - Environmental scanning with 5m range
-- **RealSense Depth Camera** - RGB + Depth sensing (640x480)
-- **Odometry** - Position tracking with velocity estimation
+### 🔷 AI Vision (Azure OpenAI)
+- **GPT-4o Vision** - Real-time scene understanding and object recognition
+- **Interactive Q&A** - Ask the robot questions about what it sees
+- **Safety detection** - Identifies obstacles and hazards
+- **Spatial awareness** - Understands object positions and layout
 
-### S3 - Control & Interaction
-- **Arm Joint Control** - Individual motor control for both arms
-- **Gesture Animations** - Wave, point, stand, sit behaviors
-- **Head Movement** - Pan and tilt control
-- **Walking System** - Forward, backward, turn left/right with motion files
+### 📡 Advanced Sensors
+- 📷 **RGB Camera** - Live MJPEG stream (320x240 @ 5 FPS)
+- 🧭 **IMU Sensors** - Accelerometer + Gyroscope orientation tracking
+- 🔵 **360° LIDAR** - 5m range environmental scanning
+- 📐 **RealSense Depth** - 3D depth perception (640x480)
+- 📍 **Odometry** - Position tracking with velocity estimation
 
-## Architecture
+### 🌐 Remote Management
+- 📊 **Real-time dashboard** - Sensor visualization and monitoring
+- 📹 **Multi-view cameras** - Robot perspective + overview
+- 📝 **Command logging** - Timestamped action history
+- ⚡ **WebSocket streaming** - Low-latency updates
 
-```
-klarix-humanoid-bot/
-├── backend/           # FastAPI server (Python)
-│   └── app/
-│       ├── api/       # REST endpoints
-│       ├── models/    # Pydantic data models
-│       └── services/  # Robot controller & bridge
-├── frontend/          # Next.js 15 + React 18 (TypeScript)
-│   ├── app/           # Next.js app directory
-│   └── components/    # React components
-└── webots/
-    ├── controllers/   # NAO controller (Python)
-    └── worlds/        # Simulation environment
-```
+---
 
-## Tech Stack
-
-**Backend:**
-- FastAPI (async Python web framework)
-- WebSocket for real-time status updates
-- MJPEG camera streaming
-
-**Frontend:**
-- Next.js 15 with App Router
-- React 18 with TypeScript
-- Tailwind CSS for styling
-- Real-time sensor visualization
-
-**Simulation:**
-- Webots R2023b
-- NAO robot model (SoftBank Robotics)
-- Office environment with Bosch branding
-
-## Setup
+## 🚀 Quick Start
 
 ### Prerequisites
-- Webots R2023b
 - Python 3.8+
 - Node.js 18+
+- Webots R2023b
+- **Azure OpenAI access** ([apply here](https://aka.ms/oai/access))
 
-### Backend Setup
+### 1. Install Dependencies
+
 ```bash
+# Backend
 cd backend
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
 
-### Frontend Setup
-```bash
+# Frontend
 cd frontend
 npm install
+```
+
+### 2. Configure Azure OpenAI
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Edit `.env` with your Azure credentials:
+```env
+AZURE_OPENAI_API_KEY=your_api_key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+```
+
+📖 **Detailed setup:** See [SETUP.md](SETUP.md)
+
+### 3. Start System
+
+```bash
+# Terminal 1: Open Webots → webots/worlds/nao_office_demo.wbt
+
+# Terminal 2: Backend
+cd backend
+python -m app.main
+
+# Terminal 3: Frontend
+cd frontend
 npm run dev
 ```
 
-### Webots Setup
-1. Open Webots R2023b
-2. Open world file: `webots/worlds/nao_office_demo.wbt`
-3. Press Play to start simulation
-4. Controller automatically connects to backend
+### 4. Access Dashboard
 
-## Usage
+Open: **http://localhost:3000**
 
-1. Start backend server (port 8000)
-2. Start frontend (port 3000)
-3. Start Webots simulation
-4. Open browser: `http://localhost:3000`
+---
 
-### Controls
-- **Gestures** - Wave, Point, Stand, Sit
-- **Head Movement** - Left, Right, Up, Down, Center
-- **Walking** - Forward, Backward, Turn Left, Turn Right
-- **Motor Control** - Individual joint position control
+## 🎮 Usage
 
-### Real-time Monitoring
-- Live camera feed (MJPEG stream)
-- IMU data (accelerometer + gyroscope)
-- LIDAR visualization (360° radar)
-- Depth camera heatmap
-- Odometry tracking
-- Robot status indicators
+### Basic Controls
+- **Gestures** - Click Wave, Point, or Stand buttons
+- **Head** - Use 5-direction control pad
+- **Walking** - Select direction + duration (0.5-5s)
 
-## API Endpoints
+### AI Vision Features
+1. Scroll to **"Vision Analysis"** panel
+2. Click **"Analyze Now"** for scene understanding
+3. Ask questions like:
+   - "What objects do you see?"
+   - "Is there any obstacle ahead?"
+   - "Describe the environment"
 
+---
+
+## 🏗️ Architecture
+
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│   Next.js    │◄────►│   FastAPI    │◄────►│   Webots     │
+│  Frontend    │ HTTP │   Backend    │ TCP  │  Simulator   │
+│  (Port 3000) │  WS  │ (Port 8000)  │Socket│  (NAO Robot) │
+└──────────────┘      └──────────────┘      └──────────────┘
+                             │
+                             ↓
+                      ┌──────────────┐
+                      │ Azure OpenAI │
+                      │   GPT-4o     │
+                      └──────────────┘
+```
+
+### Tech Stack
+
+**Frontend:**
+- Next.js 15 + React 18 + TypeScript
+- Tailwind CSS 3.4
+- Lucide React icons
+- WebSocket real-time updates
+
+**Backend:**
+- FastAPI + Uvicorn (async Python)
+- Azure OpenAI Python SDK
+- WebSocket streaming
+- PIL/Pillow image processing
+
+**Simulation:**
+- Webots R2023b
+- NAO robot model
+- Office environment with Bosch branding
+
+---
+
+## 📊 API Endpoints
+
+### Robot Control
 - `POST /api/robot/gesture` - Execute gesture
 - `POST /api/robot/head/move` - Move head
 - `POST /api/robot/walk` - Walking movement
-- `POST /api/robot/motor` - Single motor control
-- `POST /api/robot/motors` - Batch motor control
 - `GET /api/robot/status` - Current status
-- `WS /api/robot/ws` - WebSocket status stream
-- `GET /api/robot/camera/stream` - MJPEG camera feed
+- `WS /api/robot/ws` - WebSocket updates
 
-## Environment
+### Vision Service
+- `GET /api/vision/status` - Service status
+- `GET /api/vision/latest` - Latest analysis
+- `POST /api/vision/analyze` - Trigger analysis
+- `POST /api/vision/query` - Ask questions
 
-Office simulation includes:
-- Desks, chairs, and monitors
-- Conference table
-- Coffee station
-- Filing cabinets and bookshelves
-- Bosch branding panels on all walls
-- Proper lighting setup
+📖 **Interactive docs:** http://localhost:8000/docs
 
-## License
+---
 
-Bosch Internal Project
+## 📁 Project Structure
 
-## Contributors
+```
+klarix-humanoid-bot/
+├── backend/                 # FastAPI server
+│   ├── app/
+│   │   ├── api/            # REST endpoints
+│   │   │   ├── robot.py    # Robot control
+│   │   │   └── vision.py   # Vision AI
+│   │   ├── services/       # Core services
+│   │   │   ├── vision_service.py       # Azure OpenAI
+│   │   │   ├── robot_controller.py    # Robot control
+│   │   │   ├── webots_bridge.py       # TCP bridge
+│   │   │   └── camera_streamer.py     # MJPEG stream
+│   │   └── main.py
+│   └── requirements.txt
+├── frontend/               # Next.js app
+│   ├── app/
+│   ├── components/
+│   │   ├── RobotControl.tsx    # Main dashboard
+│   │   └── VisionPanel.tsx     # AI vision UI
+│   └── package.json
+└── webots/                # Simulation
+    ├── controllers/       # Robot controllers
+    └── worlds/           # Environments
+```
 
-Bosch Robotics Team
+---
+
+## 💰 Cost Estimation
+
+**Azure OpenAI GPT-4o:**
+- ~$0.003-0.005 per vision analysis
+- Rate limited to 6 requests/minute
+- Smart caching (30s TTL)
+- **Typical usage:** $0.50-3.00/day
+
+---
+
+## 🐛 Troubleshooting
+
+### "Vision service not enabled"
+✅ Check `.env` has all 4 Azure variables
+✅ Restart backend after editing `.env`
+
+### "No camera frame available"
+✅ Ensure Webots is running
+✅ Check robot shows green "Connected"
+
+### "Invalid API key"
+✅ Verify key in Azure Portal
+✅ Check for trailing spaces
+
+📖 **Full troubleshooting:** See [SETUP.md](SETUP.md)
+
+---
+
+## 📚 Documentation
+
+| File | Purpose |
+|------|---------|
+| **[QUICK_START_AZURE.md](QUICK_START_AZURE.md)** | ⚡ 6-step quick start |
+| **[SETUP.md](SETUP.md)** | 📖 Complete setup guide |
+| **[AZURE_OPENAI_SETUP.md](AZURE_OPENAI_SETUP.md)** | 🔷 Azure-specific details |
+| **[CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md)** | 📝 Recent changes |
+
+---
+
+## 🎓 Next Steps
+
+**Current:** Phase 1 - AI Vision ✅
+**Next:** Phase 2 - 3D Point Cloud Visualization
+**Future:** Autonomous navigation, SLAM, path planning
+
+---
+
+## 📄 License
+
+Bosch Internal Demo Project
+
+---
+
+## 🆘 Support
+
+- Check [SETUP.md](SETUP.md) for troubleshooting
+- Review backend console logs
+- Test API: http://localhost:8000/docs
+- Azure status: https://status.azure.com/
+
+---
+
+**Built with ❤️ for Bosch Robotics**

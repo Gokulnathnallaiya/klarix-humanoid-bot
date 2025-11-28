@@ -1,11 +1,17 @@
 """FastAPI main application"""
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.api import robot
+from app.api import robot, vision
 from app.services.robot_controller import robot_controller
 from app.services.webots_bridge import webots_bridge
+from app.services.vision_service import vision_service
 
 
 @asynccontextmanager
@@ -22,6 +28,9 @@ async def lifespan(app: FastAPI):
     # Connect robot controller to bridge
     robot_controller.set_bridge(webots_bridge)
     await robot_controller.connect()
+
+    # Initialize vision service
+    vision_service.initialize()
 
     print("✓ Backend ready - Waiting for Webots controller connection...")
     print(f"✓ Frontend: http://localhost:3000")
@@ -55,6 +64,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(robot.router)
+app.include_router(vision.router)
 
 
 @app.get("/")
@@ -64,7 +74,8 @@ async def root():
         "message": "NAO Robot Control API",
         "version": "1.0.0",
         "docs": "/docs",
-        "websocket": "/api/robot/ws"
+        "websocket": "/api/robot/ws",
+        "vision_enabled": vision_service.is_enabled()
     }
 
 

@@ -19,6 +19,7 @@ import {
   Gauge,
   Compass
 } from 'lucide-react'
+import VisionPanel from './VisionPanel'
 
 const CAMERA_FEED_URL = (process.env.NEXT_PUBLIC_CAMERA_FEED_URL || '').trim()
 
@@ -51,6 +52,15 @@ interface RobotStatus {
     theta: number
     linear_velocity: number
     angular_velocity: number
+  }
+  vision?: {
+    success?: boolean
+    analysis?: string
+    timestamp?: string
+    model?: string
+    error?: string
+    cached?: boolean
+    age_seconds?: number
   }
 }
 
@@ -493,6 +503,10 @@ export default function RobotControl() {
               The camera follows NAO automatically as it moves around!
             </p>
           </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
+          <VisionPanel visionData={status.vision} apiBase={API_BASE} />
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">

@@ -141,7 +141,10 @@ class RobotController:
 
     async def get_status(self) -> Dict:
         """Get current robot status"""
-        return {
+        # Import here to avoid circular dependency
+        from .vision_service import vision_service
+
+        status = {
             "connected": self.connected,
             "current_gesture": self.current_state.get("gesture"),
             "head_position": self.current_state.get("head_position"),
@@ -172,6 +175,14 @@ class RobotController:
                 "angular_velocity": 0.0
             })
         }
+
+        # Add vision analysis if available
+        if vision_service.is_enabled():
+            latest_analysis = await vision_service.get_latest_analysis()
+            if latest_analysis:
+                status["vision"] = latest_analysis
+
+        return status
 
     async def subscribe(self) -> asyncio.Queue:
         """Subscribe to robot state updates"""

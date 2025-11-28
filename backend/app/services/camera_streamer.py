@@ -2,6 +2,7 @@
 import asyncio
 from typing import Optional, List
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,12 @@ class CameraStreamer:
         """Get the current frame"""
         async with self.frame_lock:
             return self.current_frame
+
+    def get_latest_frame(self) -> Optional[str]:
+        """Get the current frame as base64 string (synchronous)"""
+        if self.current_frame:
+            return base64.b64encode(self.current_frame).decode('utf-8')
+        return None
 
     async def subscribe(self) -> asyncio.Queue:
         """Subscribe to frame updates"""
