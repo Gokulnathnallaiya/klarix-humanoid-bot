@@ -76,6 +76,12 @@ class NAOController:
         # Counters
         self.status_counter = 0
         self.camera_counter = 0
+        
+        # Joint position sensors
+        self.position_sensors = {}
+        
+        # Motor limits for kinematics display
+        self.motor_limits = {}
 
     def initialize(self):
         """Initialize all robot devices"""
@@ -91,7 +97,7 @@ class NAOController:
         self._init_motions()
 
     def _init_motors(self):
-        """Initialize all motors"""
+        """Initialize all motors and position sensors"""
         motor_names = [
             'HeadYaw', 'HeadPitch',
             'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw',
@@ -104,8 +110,20 @@ class NAOController:
             motor = self.robot.getDevice(name)
             if motor:
                 self.motors[name] = motor
+                # Store motor limits
+                self.motor_limits[name] = {
+                    'min': motor.getMinPosition(),
+                    'max': motor.getMaxPosition()
+                }
+                # Enable position sensor for this motor
+                sensor_name = name + 'S'
+                sensor = self.robot.getDevice(sensor_name)
+                if sensor:
+                    sensor.enable(self.timestep)
+                    self.position_sensors[name] = sensor
 
         print(f"✓ Initialized {len(self.motors)} motors")
+        print(f"✓ Initialized {len(self.position_sensors)} position sensors")
 
     def _init_camera(self):
         """Initialize camera and display"""
@@ -182,7 +200,28 @@ class NAOController:
     def _init_motions(self):
         """Load motion files"""
         print("Loading motion files...")
-        motion_path = "/usr/local/webots/projects/robots/softbank/nao/motions/"
+        
+        # Try multiple possible motion file paths (macOS, Linux, Windows)
+        motion_paths = [
+            "/Applications/Webots.app/Contents/projects/robots/softbank/nao/motions/",  # macOS
+            "/usr/local/webots/projects/robots/softbank/nao/motions/",  # Linux
+            "C:/Program Files/Webots/projects/robots/softbank/nao/motions/",  # Windows
+        ]
+        
+        motion_path = None
+        for path in motion_paths:
+            try:
+                import os
+                if os.path.exists(path + "Forwards.motion"):
+                    motion_path = path
+                    print(f"✓ Found motion files at: {path}")
+                    break
+            except:
+                continue
+        
+        if not motion_path:
+            print("⚠ Motion files not found - walking will use fallback mode")
+            return
 
         try:
             self.forward_motion = Motion(motion_path + "Forwards.motion")
@@ -298,6 +337,19 @@ class NAOController:
         except Exception as e:
             print(f"⚠ Error reading IMU: {e}")
 
+    def read_joint_angles(self):
+        """Read all joint position sensors and return angles in degrees"""
+        joint_angles = {}
+        for name, sensor in self.position_sensors.items():
+            try:
+                value = sensor.getValue()
+                if value != float('inf') and value != float('-inf'):
+                    # Convert to degrees for display
+                    joint_angles[name] = round(math.degrees(value), 1)
+            except:
+                pass
+        return joint_angles
+
     def read_lidar_data(self):
         """Read LIDAR sensor data and update state"""
         if not self.lidar:
@@ -345,7 +397,13 @@ class NAOController:
 
     def capture_and_send_camera_frame(self):
         """Capture camera frame and send to backend"""
-        if not (self.camera and PIL_AVAILABLE):
+        if not self.camera:
+            return False
+            
+        if not PIL_AVAILABLE:
+            return False
+            
+        if not self.backend or not self.backend.is_connected():
             return False
 
         try:
@@ -364,11 +422,16 @@ class NAOController:
             # Convert BGRA to RGB and encode as JPEG
             img = Image.frombytes('RGBA', (width, height), camera_image, 'raw', 'BGRA')
             img_rgb = img.convert('RGB')
+            
+            # Resize to reduce bandwidth (optional - 320x240)
+            img_rgb = img_rgb.resize((320, 240), Image.Resampling.LANCZOS)
+            
             buffer = io.BytesIO()
-            img_rgb.save(buffer, format='JPEG', quality=85)
+            img_rgb.save(buffer, format='JPEG', quality=70)  # Lower quality for faster streaming
             jpeg_data = buffer.getvalue()
+            buffer.close()
 
-            # Send to backend
+            # Send to backend (non-blocking)
             frame_b64 = base64.b64encode(jpeg_data).decode('utf-8')
             return self.backend.send_status({
                 "type": "camera_frame",
@@ -495,26 +558,60 @@ class NAOController:
         # Set initial pose
         self.standing_pose()
 
+        # Track reconnection attempts
+        reconnect_cooldown = 0
+
         # Main loop
-        while self.robot.step(self.timestep) != -1:
-            # Process camera every step (send every 10 steps)
-            if self.camera:
-                self.camera_counter += 1
-                if self.camera_counter >= 10:  # ~5 FPS
-                    self.capture_and_send_camera_frame()
-                    self.camera_counter = 0
+        try:
+            while self.robot.step(self.timestep) != -1:
+                # Check if backend is still connected
+                if not self.backend.is_connected():
+                    # Try to reconnect with cooldown
+                    if reconnect_cooldown <= 0:
+                        print("🔄 Attempting to reconnect to backend...")
+                        self.backend.disconnect()  # Clean up old connection
+                        self.backend = BackendClient()
+                        if self.backend.connect(max_retries=2, retry_delay=1):
+                            self.backend.start_listening(self.handle_command)
+                            print("✓ Reconnected to backend!\n")
+                            reconnect_cooldown = 0
+                        else:
+                            print("⚠ Backend not available, will retry in 5 seconds...")
+                            reconnect_cooldown = 5 * 1000 // self.timestep  # 5 seconds worth of steps
+                    else:
+                        reconnect_cooldown -= 1
+                    
+                    # Continue running even without backend (camera display, etc)
+                    if self.camera and self.display:
+                        camera_image = self.camera.getImage()
+                        if camera_image:
+                            self.display.imagePaste(camera_image, 0, 0)
+                    continue
+                
+                # Reset reconnect cooldown when connected
+                reconnect_cooldown = 0
+                
+                # Process camera every 5 steps (~10 FPS for smoother video)
+                if self.camera and PIL_AVAILABLE:
+                    self.camera_counter += 1
+                    if self.camera_counter >= 5:
+                        self.capture_and_send_camera_frame()
+                        self.camera_counter = 0
 
-            # Send status updates every 100 steps (~2 seconds)
-            self.status_counter += 1
-            if self.status_counter >= 100:
-                self.read_imu_data()
-                self.read_lidar_data()
-                self.read_depth_data()
-                self.backend.send_status(self.current_state)
-                self.status_counter = 0
+                # Send status updates every 25 steps (~0.5 second for more responsive UI)
+                self.status_counter += 1
+                if self.status_counter >= 25:
+                    self.read_imu_data()
+                    # Add joint angles to state
+                    self.current_state["joints"] = self.read_joint_angles()
+                    self.backend.send_status(self.current_state)
+                    self.status_counter = 0
 
-            # Small delay to prevent busy loop
-            time.sleep(0.001)
+        except Exception as e:
+            print(f"✗ Error in main loop: {e}")
+        finally:
+            if self.backend:
+                self.backend.disconnect()
 
     def _run_standalone(self):
         """Run in standalone mode without backend"""

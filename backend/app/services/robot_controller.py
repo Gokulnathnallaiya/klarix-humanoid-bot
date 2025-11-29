@@ -9,7 +9,6 @@ class RobotController:
     """Handles robot control commands and state management"""
 
     def __init__(self):
-        self.connected = False
         self.webots_bridge = None
         self.current_state = {
             "gesture": None,
@@ -19,15 +18,26 @@ class RobotController:
         }
         self.subscribers: List[asyncio.Queue] = []
 
+    @property
+    def connected(self) -> bool:
+        """Connection state reflects actual Webots bridge connection"""
+        if self.webots_bridge:
+            return self.webots_bridge.connected
+        return False
+
     def set_bridge(self, bridge):
         """Set the Webots bridge instance"""
         self.webots_bridge = bridge
         bridge.register_status_callback(self._handle_webots_status)
 
     async def connect(self):
-        """Connect to robot/simulation"""
-        self.connected = True
-        print("✓ Robot controller ready")
+        """Check connection to robot/simulation (Webots connects automatically)"""
+        if self.connected:
+            print("✓ Robot controller ready")
+            return {"success": True, "message": "Connected to Webots"}
+        else:
+            print("⚠ Webots not connected - start Webots simulation and press Play")
+            return {"success": False, "message": "Webots not connected. Start Webots and press Play."}
 
     async def _handle_webots_status(self, status: Dict):
         """Handle status updates from Webots"""
@@ -37,9 +47,9 @@ class RobotController:
         await self._notify_subscribers()
 
     async def disconnect(self):
-        """Disconnect from robot"""
-        self.connected = False
-        print("Robot controller disconnected")
+        """Disconnect from robot (note: Webots manages its own connection)"""
+        print("Robot controller: disconnect requested")
+        return {"success": True, "message": "Disconnect requested"}
 
     async def send_gesture(self, gesture: str) -> Dict:
         """Send gesture command to robot"""
@@ -150,6 +160,7 @@ class RobotController:
             "head_position": self.current_state.get("head_position"),
             "is_moving": self.current_state.get("is_moving"),
             "motor_positions": self.current_state.get("motor_positions"),
+            "joints": self.current_state.get("joints", {}),  # Joint angles from Webots
             "imu": self.current_state.get("imu", {
                 "accelerometer": {"x": 0, "y": 0, "z": 0},
                 "gyroscope": {"x": 0, "y": 0, "z": 0}
