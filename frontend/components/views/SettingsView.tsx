@@ -115,7 +115,7 @@ export default function SettingsView() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="h-full flex flex-col space-y-4 overflow-auto">
       {/* System Status */}
       <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
         <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">

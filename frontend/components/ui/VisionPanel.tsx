@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Sparkles, Send, Loader2, Eye, AlertCircle, Lightbulb, Box, MapPin, Shield, Zap } from 'lucide-react'
+import { tts } from '@/lib/speechServices'
 
 interface VisionPanelProps {
   isConnected: boolean
@@ -44,6 +45,12 @@ export default function VisionPanel({ isConnected, className = '' }: VisionPanel
       
       const result = await response.json()
       setAnalysis(result)
+
+      // Speak the analysis result
+      if (result.success && result.analysis) {
+        const cleanText = result.analysis.replace(/[^\w\s.,!?'-]/g, '').trim()
+        await tts.speakAsRobot(cleanText)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
     } finally {
@@ -72,6 +79,12 @@ export default function VisionPanel({ isConnected, className = '' }: VisionPanel
       const result = await response.json()
       setAnalysis(result)
       setQuestion('')
+
+      // Speak the answer
+      if (result.success && result.analysis) {
+        const cleanText = result.analysis.replace(/[^\w\s.,!?'-]/g, '').trim()
+        await tts.speakAsRobot(cleanText)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Query failed')
     } finally {

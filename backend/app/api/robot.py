@@ -18,6 +18,7 @@ from app.models.robot import (
 )
 from app.services.robot_controller import robot_controller
 from app.services.camera_streamer import camera_streamer
+from app.services.vision_service import vision_service
 
 # Import OpenAI for AI Assistant
 try:
@@ -390,22 +391,24 @@ Response: {"response": "I'm doing great, thanks for asking! I'm ready to help yo
 
 Be friendly, helpful, and use emojis occasionally. Always return valid JSON with "commands" as an array."""
 
-# Redefine with voice-first approach and STOP command
-AI_SYSTEM_PROMPT = """You are Klarix, a friendly humanoid robot. You respond to voice commands naturally. Speak in first person - you ARE the robot.
+# Redefine with voice-first approach, STOP command, and VISION
+AI_SYSTEM_PROMPT = """You are Klarix, a friendly humanoid robot with vision capabilities. You respond to voice commands naturally. Speak in first person - you ARE the robot.
 
 ## Capabilities:
 - Gestures: wave, point, stand
-- Walking: forward, backward, turn_left, turn_right  
+- Walking: forward, backward, turn_left, turn_right
 - Head: look up, down, left, right, center
 - STOP: Halt all movement immediately (HIGHEST PRIORITY!)
+- VISION: See and describe what's in front of you using your camera
 
 ## JSON Response Format:
 {"response": "SHORT spoken reply (max 15 words)", "commands": [{"type": "...", "action": "...", "params": {}}]}
 
 ## Command Types:
 - STOP/halt/freeze/wait → {"type": "stop", "action": "stop"} [PRIORITY!]
+- what can you see/describe/what do you see/look at/tell me what you see → {"type": "vision", "action": "analyze"}
 - wave/hello/hi → {"type": "gesture", "action": "wave"}
-- point → {"type": "gesture", "action": "point"}  
+- point → {"type": "gesture", "action": "point"}
 - stand/reset → {"type": "gesture", "action": "stand"}
 - forward/go/walk/come → {"type": "walk", "action": "forward", "params": {"duration": 2}}
 - back/backward → {"type": "walk", "action": "backward", "params": {"duration": 2}}
@@ -419,10 +422,12 @@ AI_SYSTEM_PROMPT = """You are Klarix, a friendly humanoid robot. You respond to 
 1. STOP = highest priority, respond immediately
 2. Keep responses SHORT (voice!) - 10-15 words max
 3. Multiple actions go in commands array sequentially
-4. Be friendly and natural
+4. When user asks about vision/seeing, use {"type": "vision", "action": "analyze"}
+5. Be friendly and natural
 
 Examples:
 "Stop!" → {"response": "Stopping!", "commands": [{"type": "stop", "action": "stop"}]}
+"What can you see?" → {"response": "Let me look!", "commands": [{"type": "vision", "action": "analyze"}]}
 "Wave" → {"response": "Waving at you!", "commands": [{"type": "gesture", "action": "wave"}]}
 "Walk forward" → {"response": "Moving forward!", "commands": [{"type": "walk", "action": "forward", "params": {"duration": 2}}]}"""
 
@@ -519,7 +524,32 @@ async def ai_chat(request: AIAssistantRequest) -> Dict:
                         result = await robot_controller.move_head(action)
                         exec_result["success"] = result.get("success", False)
                         print(f"👀 Executed head movement: {action} - Success: {exec_result['success']}")
-                    
+
+                    # VISION command - analyze what the robot sees
+                    elif cmd_type == "vision" and action == "analyze":
+                        if vision_service.is_enabled():
+                            # Get current camera frame
+                            frame = await camera_streamer.get_frame_base64()
+                            if frame:
+                                # Analyze the scene
+                                vision_result = await vision_service.query_scene(frame, request.message)
+                                if vision_result and vision_result.get("success"):
+                                    # Update response with vision analysis
+                                    response_text = vision_result.get("analysis", "I looked but couldn't process what I saw.")
+                                    exec_result["success"] = True
+                                    exec_result["vision_data"] = vision_result
+                                    print(f"👁️ Vision analysis complete: {response_text[:100]}...")
+                                else:
+                                    response_text = "I tried to look but had trouble analyzing the scene."
+                                    exec_result["success"] = False
+                            else:
+                                response_text = "I don't have a camera feed available right now."
+                                exec_result["success"] = False
+                        else:
+                            response_text = "My vision system is not available at the moment."
+                            exec_result["success"] = False
+                        print(f"👁️ Vision command - Success: {exec_result['success']}")
+
                     executed_commands.append(exec_result)
                     
                     # Add a small delay between sequential commands

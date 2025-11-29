@@ -40,9 +40,9 @@ export default function AnalyticsView() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Tabs */}
-      <div className="flex bg-slate-800/50 rounded-xl p-1">
+      <div className="flex bg-slate-800/50 rounded-xl p-1 flex-shrink-0 mb-4">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -61,7 +61,7 @@ export default function AnalyticsView() {
 
       {/* Path Visualization Tab */}
       {activeTab === 'path' && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-auto">
           {/* Full Path Map */}
           <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-4">
@@ -226,7 +226,7 @@ export default function AnalyticsView() {
 
       {/* Sensors Tab */}
       {activeTab === 'sensors' && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 overflow-auto">
           {/* IMU Data */}
           <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
             <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function AnalyticsView() {
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
-        <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+        <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 flex-1 overflow-auto">
           <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-400" />
             Command History

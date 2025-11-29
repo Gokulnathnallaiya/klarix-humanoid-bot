@@ -5,8 +5,8 @@ import CameraFeed from '@/components/ui/CameraFeed'
 import VisionPanel from '@/components/ui/VisionPanel'
 import KinematicsPanel from '@/components/ui/KinematicsPanel'
 import VoiceAssistant from '@/components/ui/VoiceAssistant'
-import { 
-  Hand, Pointer, User, ArrowUp, ArrowDown, RotateCcw, RotateCw,
+import {
+  Hand, Pointer, User,
   AlertTriangle, X, Battery, Thermometer, Activity, MapPin,
   Eye, Zap, Clock, StopCircle
 } from 'lucide-react'
@@ -25,17 +25,10 @@ export default function Dashboard() {
     { label: 'Stand', value: 'stand', icon: User, color: 'from-emerald-500 to-teal-500' },
   ]
 
-  const movements = [
-    { label: 'Forward', value: 'forward', icon: ArrowUp },
-    { label: 'Back', value: 'backward', icon: ArrowDown },
-    { label: 'Left', value: 'turn_left', icon: RotateCcw },
-    { label: 'Right', value: 'turn_right', icon: RotateCw },
-  ]
-
   return (
-    <div className="space-y-4 lg:space-y-6 pb-4">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Desktop Header */}
-      <div className="hidden lg:flex items-center justify-between">
+      <div className="hidden lg:flex items-center justify-between flex-shrink-0 mb-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           <p className="text-slate-400">Monitor and control your Klarix Robot</p>
@@ -54,7 +47,7 @@ export default function Dashboard() {
 
       {/* Alerts Banner */}
       {status.alerts.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/20 to-red-500/20 border border-amber-500/30 rounded-2xl p-4">
+        <div className="bg-gradient-to-r from-amber-500/20 to-red-500/20 border border-amber-500/30 rounded-2xl p-4 flex-shrink-0 mb-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5" />
@@ -75,11 +68,11 @@ export default function Dashboard() {
       )}
 
       {/* Desktop: 3-column layout */}
-      <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 lg:gap-4 flex-1 overflow-auto">
         {/* Left Column - Camera & Vision */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Camera Feed */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 lg:p-6">
+          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm lg:text-base font-semibold text-white flex items-center gap-2">
                 <Eye className="w-4 h-4 lg:w-5 lg:h-5 text-purple-400" />
@@ -102,7 +95,7 @@ export default function Dashboard() {
           </div>
 
           {/* Path Map */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 lg:p-6">
+          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm lg:text-base font-semibold text-white flex items-center gap-2">
                 <MapPin className="w-4 h-4 lg:w-5 lg:h-5 text-cyan-400" />
@@ -148,7 +141,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column - Controls & Status */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-4">
           {/* Status Cards */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
@@ -202,8 +195,8 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 lg:p-6">
-            <h2 className="text-sm lg:text-base font-semibold text-white mb-3 lg:mb-4 flex items-center gap-2">
+          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+            <h2 className="text-sm lg:text-base font-semibold text-white mb-3 flex items-center gap-2">
               <Zap className="w-4 h-4 lg:w-5 lg:h-5 text-amber-400" />
               Quick Actions
             </h2>
@@ -213,35 +206,12 @@ export default function Dashboard() {
                   key={action.value}
                   onClick={() => sendCommand('/api/robot/gesture', { gesture: action.value }, action.label)}
                   disabled={loading || !isConnected}
-                  className={`relative overflow-hidden rounded-xl p-4 lg:p-5 text-white font-semibold transition-all 
+                  className={`relative overflow-hidden rounded-xl p-3 text-white font-semibold transition-all
                     bg-gradient-to-br ${action.color} hover:scale-[1.02] active:scale-[0.98]
                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
                 >
-                  <action.icon className="w-6 h-6 lg:w-7 lg:h-7 mx-auto mb-2" />
+                  <action.icon className="w-6 h-6 mx-auto mb-2" />
                   <span className="text-sm">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Movement Controls */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 lg:p-6">
-            <h2 className="text-sm lg:text-base font-semibold text-white mb-3 lg:mb-4 flex items-center gap-2">
-              <Activity className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-400" />
-              Movement
-            </h2>
-            <div className="grid grid-cols-4 lg:grid-cols-2 gap-2 lg:gap-3">
-              {movements.map((move) => (
-                <button
-                  key={move.value}
-                  onClick={() => sendCommand('/api/robot/walk', { movement: move.value, duration: 2 }, move.label)}
-                  disabled={loading || !isConnected}
-                  className="flex flex-col items-center justify-center p-3 lg:p-4 rounded-xl bg-slate-700/50 border border-white/10
-                    hover:bg-slate-700 hover:border-white/20 transition-all
-                    disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <move.icon className="w-5 h-5 lg:w-6 lg:h-6 text-white mb-1" />
-                  <span className="text-xs lg:text-sm text-slate-300">{move.label}</span>
                 </button>
               ))}
             </div>
@@ -253,8 +223,8 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Commands */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 lg:p-6">
-            <h2 className="text-sm lg:text-base font-semibold text-white mb-3 lg:mb-4 flex items-center gap-2">
+          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+            <h2 className="text-sm lg:text-base font-semibold text-white mb-3 flex items-center gap-2">
               <Clock className="w-4 h-4 lg:w-5 lg:h-5 text-slate-400" />
               Recent Commands
             </h2>

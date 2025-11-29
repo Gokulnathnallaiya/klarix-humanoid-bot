@@ -20,7 +20,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
@@ -29,7 +29,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Desktop Sidebar - hidden on mobile */}
-      <Sidebar 
+      <Sidebar
         robotConnected={status.connected}
         battery={status.battery}
         temperature={status.temperature}
@@ -37,8 +37,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       />
 
       {/* Mobile Header - hidden on desktop */}
-      <div className="lg:hidden">
-        <StatusHeader 
+      <div className="lg:hidden flex-shrink-0">
+        <StatusHeader
           robotConnected={status.connected}
           battery={status.battery}
           temperature={status.temperature}
@@ -47,14 +47,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <main className="relative lg:ml-64 pt-16 lg:pt-4 pb-20 lg:pb-4 px-4 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="relative flex-1 lg:ml-64 overflow-auto px-4 lg:px-8 pt-4 pb-4 lg:pt-6 lg:pb-6">
+        <div className="max-w-7xl mx-auto h-full">
           {children}
         </div>
       </main>
 
       {/* Mobile Bottom Navigation - hidden on desktop */}
-      <div className="lg:hidden">
+      <div className="lg:hidden flex-shrink-0">
         <BottomNav />
       </div>
 

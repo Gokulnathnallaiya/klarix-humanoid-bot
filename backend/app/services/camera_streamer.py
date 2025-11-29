@@ -47,6 +47,13 @@ class CameraStreamer:
         async with self.frame_lock:
             return self.current_frame
 
+    async def get_frame_base64(self) -> Optional[str]:
+        """Get the current frame as base64 string (async)"""
+        frame = await self.get_frame()
+        if frame:
+            return base64.b64encode(frame).decode('utf-8')
+        return None
+
     def get_latest_frame_base64(self) -> Optional[str]:
         """Get the current frame as base64 string (synchronous)"""
         if self.current_frame:

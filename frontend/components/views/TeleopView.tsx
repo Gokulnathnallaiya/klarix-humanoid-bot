@@ -4,7 +4,7 @@ import { useRobot } from '@/components/providers/RobotProvider'
 import CameraFeed from '@/components/ui/CameraFeed'
 import VisionPanel from '@/components/ui/VisionPanel'
 import KinematicsPanel from '@/components/ui/KinematicsPanel'
-import VoiceControl from '@/components/ui/VoiceControl'
+import VoiceAssistant from '@/components/ui/VoiceAssistant'
 import { useState, useRef } from 'react'
 import { 
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, 
@@ -101,9 +101,9 @@ export default function TeleopView() {
   ]
 
   return (
-    <div className="space-y-4 lg:space-y-6">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Desktop Header */}
-      <div className="hidden lg:flex items-center justify-between">
+      <div className="hidden lg:flex items-center justify-between flex-shrink-0 mb-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-3">
             <Gamepad2 className="w-7 h-7 text-cyan-400" />
@@ -124,7 +124,7 @@ export default function TeleopView() {
       </div>
 
       {/* Desktop: 2-column layout */}
-      <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 lg:gap-4 flex-1 overflow-auto">
         {/* Main Camera & Controls */}
         <div className="lg:col-span-2 space-y-4">
           <div className={`relative ${fullscreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
@@ -248,7 +248,7 @@ export default function TeleopView() {
         </div>
 
         {/* Right Sidebar - Desktop */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-4">
           {/* Telemetry Quick Stats */}
           <div className="grid grid-cols-3 lg:grid-cols-1 gap-3">
             <div className="bg-slate-800/50 rounded-xl p-3 lg:p-4 text-center lg:text-left lg:flex lg:items-center lg:justify-between">
@@ -266,9 +266,6 @@ export default function TeleopView() {
               </p>
             </div>
           </div>
-
-          {/* Voice Control */}
-          <VoiceControl />
 
           {/* Kinematics Panel */}
           {showPanels && <KinematicsPanel joints={status.joints} />}
@@ -288,10 +285,13 @@ export default function TeleopView() {
 
       {/* Mobile Only: Vision Panel */}
       {!fullscreen && showPanels && (
-        <div className="lg:hidden">
+        <div className="lg:hidden mt-4">
           <VisionPanel isConnected={isConnected} />
         </div>
       )}
+
+      {/* Voice Assistant - Floating Panel */}
+      <VoiceAssistant />
     </div>
   )
 }

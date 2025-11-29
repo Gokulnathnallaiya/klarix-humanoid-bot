@@ -30,7 +30,7 @@ export default function VoiceAssistant() {
   const [transcript, setTranscript] = useState('')
   const [conversation, setConversation] = useState<ConversationItem[]>([])
   const [isMinimized, setIsMinimized] = useState(false)
-  const [showPanel, setShowPanel] = useState(true)
+  const [showPanel, setShowPanel] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionInstance>(null)
   const isConnected = connectionState === 'connected'
 
@@ -265,8 +265,8 @@ export default function VoiceAssistant() {
   }
 
   return (
-    <div className={`fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 
-      ${isMinimized ? 'w-auto' : 'w-[calc(100vw-2rem)] max-w-sm'}
+    <div className={`fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50
+      ${isMinimized ? 'w-auto' : 'w-[calc(100vw-2rem)] max-w-md'}
       bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden
       transition-all duration-300`}>
       
@@ -286,7 +286,7 @@ export default function VoiceAssistant() {
             <div>
               <h3 className="text-sm font-semibold text-white">Klarix Voice</h3>
               <p className="text-xs text-slate-400">
-                {isListening ? '🎤 Listening...' : isProcessing ? '🤔 Thinking...' : 'Say a command'}
+                {isListening ? '🎤 Listening...' : isProcessing ? '🤔 Thinking...' : 'Powered by GPT'}
               </p>
             </div>
           )}
@@ -326,7 +326,7 @@ export default function VoiceAssistant() {
       {!isMinimized && (
         <>
           {/* Conversation */}
-          <div className="h-48 overflow-y-auto p-3 space-y-2">
+          <div className="h-80 overflow-y-auto p-3 space-y-2">
             {conversation.length === 0 && (
               <div className="text-center text-slate-500 text-sm py-8">
                 <Mic className="w-8 h-8 mx-auto mb-2 opacity-50" />
