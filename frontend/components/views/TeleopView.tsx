@@ -103,19 +103,21 @@ export default function TeleopView() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Desktop Header */}
-      <div className="hidden lg:flex items-center justify-between flex-shrink-0 mb-4">
+      <div className="hidden lg:flex items-center justify-between flex-shrink-0 mb-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Gamepad2 className="w-7 h-7 text-cyan-400" />
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white flex items-center gap-3">
+            <Gamepad2 className="w-6 h-6 text-slate-600 dark:text-slate-400" />
             Teleoperation
           </h1>
-          <p className="text-slate-400">Manual robot control with live camera feed</p>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Manual robot control with live camera feed</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-            status.connected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+            status.connected
+              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
+              : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
           }`}>
-            <div className={`w-2 h-2 rounded-full ${status.connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+            <div className={`w-2 h-2 rounded-full ${status.connected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             <span className="text-sm font-medium">
               {status.connected ? 'Live Feed Active' : 'Waiting for Feed'}
             </span>
@@ -151,7 +153,7 @@ export default function TeleopView() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setShowPanels(!showPanels)}
-                          className={`p-2 rounded-lg transition ${showPanels ? 'bg-cyan-500/30' : 'bg-white/10 hover:bg-white/20'}`}
+                          className={`p-2 rounded-lg transition ${showPanels ? 'bg-blue-500/30' : 'bg-white/10 hover:bg-white/20'}`}
                         >
                           <Layers className="w-5 h-5 text-white" />
                         </button>
@@ -192,7 +194,7 @@ export default function TeleopView() {
                         
                         {/* Joystick knob */}
                         <div
-                          className={`absolute w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-cyan-500 shadow-lg shadow-cyan-500/50 transition-all ${
+                          className={`absolute w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-blue-600 shadow-lg shadow-blue-600/50 transition-all ${
                             joystickActive ? 'scale-110' : ''
                           }`}
                           style={{
@@ -251,17 +253,21 @@ export default function TeleopView() {
         <div className="space-y-4">
           {/* Telemetry Quick Stats */}
           <div className="grid grid-cols-3 lg:grid-cols-1 gap-3">
-            <div className="bg-slate-800/50 rounded-xl p-3 lg:p-4 text-center lg:text-left lg:flex lg:items-center lg:justify-between">
-              <p className="text-xs text-slate-400">Battery</p>
-              <p className="text-lg lg:text-2xl font-bold text-emerald-400">{status.battery.toFixed(0)}%</p>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 lg:p-4 shadow-sm text-center lg:text-left lg:flex lg:items-center lg:justify-between">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Battery</p>
+              <p className={`text-lg lg:text-2xl font-semibold ${
+                status.battery > 40 ? 'text-emerald-600 dark:text-emerald-400' : status.battery > 20 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
+              }`}>{status.battery.toFixed(0)}%</p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 lg:p-4 text-center lg:text-left lg:flex lg:items-center lg:justify-between">
-              <p className="text-xs text-slate-400">Temperature</p>
-              <p className="text-lg lg:text-2xl font-bold text-orange-400">{status.temperature.toFixed(0)}°C</p>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 lg:p-4 shadow-sm text-center lg:text-left lg:flex lg:items-center lg:justify-between">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Temperature</p>
+              <p className={`text-lg lg:text-2xl font-semibold ${
+                status.temperature > 55 ? 'text-red-600 dark:text-red-400' : status.temperature > 40 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300'
+              }`}>{status.temperature.toFixed(0)}°C</p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 lg:p-4 text-center lg:text-left lg:flex lg:items-center lg:justify-between">
-              <p className="text-xs text-slate-400">Status</p>
-              <p className={`text-lg lg:text-2xl font-bold ${status.is_moving ? 'text-cyan-400' : 'text-slate-400'}`}>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 lg:p-4 shadow-sm text-center lg:text-left lg:flex lg:items-center lg:justify-between">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Status</p>
+              <p className={`text-lg lg:text-2xl font-semibold ${status.is_moving ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'}`}>
                 {status.is_moving ? 'Moving' : 'Idle'}
               </p>
             </div>
@@ -271,13 +277,13 @@ export default function TeleopView() {
           {showPanels && <KinematicsPanel joints={status.joints} />}
 
           {/* Instructions */}
-          <div className="bg-slate-800/30 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-white mb-2">Controls</h3>
-            <div className="space-y-1 text-xs text-slate-400">
-              <p>🕹️ <span className="text-cyan-400">Joystick</span> - Move robot</p>
-              <p>🎮 <span className="text-purple-400">D-pad</span> - Control head</p>
-              <p>👋 <span className="text-pink-400">Buttons</span> - Gestures</p>
-              <p>🎤 <span className="text-amber-400">Voice</span> - Speak commands</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Controls</h3>
+            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+              <p>🕹️ <span className="font-medium text-slate-900 dark:text-white">Joystick</span> - Move robot</p>
+              <p>🎮 <span className="font-medium text-slate-900 dark:text-white">D-pad</span> - Control head</p>
+              <p>👋 <span className="font-medium text-slate-900 dark:text-white">Buttons</span> - Gestures</p>
+              <p>🎤 <span className="font-medium text-slate-900 dark:text-white">Voice</span> - Speak commands</p>
             </div>
           </div>
         </div>

@@ -20,13 +20,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="h-screen bg-slate-950 text-white flex flex-col overflow-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
-      </div>
+    <div className="h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col overflow-hidden">
+      {/* Clean background - no gradients */}
+      <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 pointer-events-none" />
 
       {/* Desktop Sidebar - hidden on mobile */}
       <Sidebar

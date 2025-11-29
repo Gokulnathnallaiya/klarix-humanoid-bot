@@ -24,36 +24,36 @@ export default function ConnectionScreen() {
       case 'disconnected':
         return {
           icon: WifiOff,
-          iconColor: 'text-slate-400',
-          bgColor: 'bg-slate-800/50',
-          borderColor: 'border-slate-700',
+          iconColor: 'text-slate-500',
+          bgColor: 'bg-slate-100 dark:bg-slate-800',
+          borderColor: 'border-slate-300 dark:border-slate-700',
           title: 'Not Connected',
           subtitle: 'Connect to your robot to begin',
         }
       case 'connecting':
         return {
           icon: Loader2,
-          iconColor: 'text-cyan-400 animate-spin',
-          bgColor: 'bg-cyan-500/10',
-          borderColor: 'border-cyan-500/30',
+          iconColor: 'text-blue-600 dark:text-blue-400 animate-spin',
+          bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+          borderColor: 'border-blue-200 dark:border-blue-800',
           title: 'Connecting...',
           subtitle: 'Establishing connection to robot',
         }
       case 'error':
         return {
           icon: AlertCircle,
-          iconColor: 'text-red-400',
-          bgColor: 'bg-red-500/10',
-          borderColor: 'border-red-500/30',
+          iconColor: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-950/30',
+          borderColor: 'border-red-200 dark:border-red-800',
           title: 'Connection Failed',
           subtitle: connectionError || 'Unable to connect to robot',
         }
       default:
         return {
           icon: Wifi,
-          iconColor: 'text-emerald-400',
-          bgColor: 'bg-emerald-500/10',
-          borderColor: 'border-emerald-500/30',
+          iconColor: 'text-emerald-600 dark:text-emerald-400',
+          bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+          borderColor: 'border-emerald-200 dark:border-emerald-800',
           title: 'Connected',
           subtitle: 'Robot is ready',
         }
@@ -64,28 +64,28 @@ export default function ConnectionScreen() {
   const StatusIcon = statusConfig.icon
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
       {/* Header */}
-      <div className="p-6 text-center">
+      <div className="p-6 text-center border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center justify-center gap-3 mb-2">
-          <Bot className="w-8 h-8 text-cyan-400" />
-          <h1 className="text-2xl font-bold text-white">Klarix Robot</h1>
+          <Bot className="w-8 h-8 text-slate-700 dark:text-slate-300" />
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Klarix Robot</h1>
         </div>
-        <p className="text-slate-400 text-sm">Cloud Remote Management System</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">Cloud Remote Management System</p>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
         {/* Status Card */}
-        <div className={`w-full max-w-sm ${statusConfig.bgColor} backdrop-blur border ${statusConfig.borderColor} rounded-3xl p-8 text-center`}>
+        <div className={`w-full max-w-sm bg-white dark:bg-slate-900 border ${statusConfig.borderColor} rounded-lg p-8 text-center shadow-sm`}>
           <div className={`w-20 h-20 mx-auto mb-6 rounded-full ${statusConfig.bgColor} border ${statusConfig.borderColor} flex items-center justify-center`}>
             <StatusIcon className={`w-10 h-10 ${statusConfig.iconColor}`} />
           </div>
-          
-          <h2 className="text-xl font-semibold text-white mb-2">
+
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
             {statusConfig.title}
           </h2>
-          <p className="text-slate-400 text-sm mb-8">
+          <p className="text-slate-600 dark:text-slate-400 text-sm mb-8">
             {statusConfig.subtitle}
           </p>
 
@@ -94,10 +94,10 @@ export default function ConnectionScreen() {
             <button
               onClick={handleConnect}
               disabled={isConnecting}
-              className="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 
-                text-white font-semibold rounded-2xl transition-all transform hover:scale-[1.02] active:scale-[0.98]
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-                flex items-center justify-center gap-3 shadow-lg shadow-cyan-500/25"
+              className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700
+                text-white font-medium rounded-lg transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed
+                flex items-center justify-center gap-2 shadow-sm"
             >
               {isConnecting ? (
                 <>
@@ -121,21 +121,21 @@ export default function ConnectionScreen() {
           {/* Connecting state */}
           {connectionState === 'connecting' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-center gap-2 text-cyan-400">
+              <div className="flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 <span>Please wait...</span>
               </div>
-              <div className="space-y-2 text-left text-xs text-slate-500">
+              <div className="space-y-2 text-left text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                   <span>Checking backend server...</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-slate-600" />
+                  <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>Connecting to robot...</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-slate-600" />
+                  <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700" />
                   <span>Establishing WebSocket...</span>
                 </div>
               </div>
@@ -145,19 +145,19 @@ export default function ConnectionScreen() {
 
         {/* Prerequisites */}
         <div className="mt-8 w-full max-w-sm">
-          <h3 className="text-sm font-medium text-slate-400 mb-4 text-center">Prerequisites</h3>
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-4 text-center">Prerequisites</h3>
           <div className="space-y-3">
-            <PrerequisiteItem 
+            <PrerequisiteItem
               number={1}
               title="Backend Server"
               description="Running on localhost:8000"
             />
-            <PrerequisiteItem 
+            <PrerequisiteItem
               number={2}
               title="Webots Simulator"
               description="Open and press Play button"
             />
-            <PrerequisiteItem 
+            <PrerequisiteItem
               number={3}
               title="Klarix Controller"
               description="Active in Webots"
@@ -167,8 +167,8 @@ export default function ConnectionScreen() {
       </div>
 
       {/* Footer */}
-      <div className="p-4 text-center">
-        <p className="text-xs text-slate-600">
+      <div className="p-4 text-center border-t border-slate-200 dark:border-slate-800">
+        <p className="text-xs text-slate-500 dark:text-slate-600">
           Bosch S4 Stream Hackathon • v1.0.0
         </p>
       </div>
@@ -176,23 +176,23 @@ export default function ConnectionScreen() {
   )
 }
 
-function PrerequisiteItem({ 
-  number, 
-  title, 
-  description 
-}: { 
+function PrerequisiteItem({
+  number,
+  title,
+  description
+}: {
   number: number
   title: string
-  description: string 
+  description: string
 }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/50">
-      <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-        <span className="text-xs font-medium text-slate-300">{number}</span>
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+      <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{number}</span>
       </div>
       <div>
-        <p className="text-sm font-medium text-slate-300">{title}</p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{title}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-400">{description}</p>
       </div>
     </div>
   )

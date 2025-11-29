@@ -42,15 +42,15 @@ export default function AnalyticsView() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Tabs */}
-      <div className="flex bg-slate-800/50 rounded-xl p-1 flex-shrink-0 mb-4">
+      <div className="flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-1 flex-shrink-0 mb-4 shadow-sm">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition ${
               activeTab === tab.id
-                ? 'bg-cyan-500 text-white'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -63,13 +63,13 @@ export default function AnalyticsView() {
       {activeTab === 'path' && (
         <div className="space-y-4 flex-1 overflow-auto">
           {/* Full Path Map */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Navigation className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                 Robot Path History
               </h2>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {status.path_history.length} waypoints
               </span>
             </div>
@@ -158,14 +158,14 @@ export default function AnalyticsView() {
           </div>
 
           {/* Playback Controls */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white">Path Playback</h3>
-              <span className="text-xs text-slate-400">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Path Playback</h3>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {playbackIndex + 1} / {status.path_history.length}
               </span>
             </div>
-            
+
             <div className="space-y-3">
               {/* Slider */}
               <input
@@ -174,21 +174,21 @@ export default function AnalyticsView() {
                 max={Math.max(0, status.path_history.length - 1)}
                 value={playbackIndex}
                 onChange={(e) => setPlaybackIndex(Number(e.target.value))}
-                className="w-full accent-cyan-500"
+                className="w-full accent-blue-600"
               />
-              
+
               {/* Controls */}
               <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={resetPlayback}
-                  className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition"
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition"
                 >
-                  <RotateCcw className="w-5 h-5 text-white" />
+                  <RotateCcw className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 </button>
                 <button
                   onClick={isPlaying ? () => setIsPlaying(false) : startPlayback}
                   disabled={status.path_history.length === 0}
-                  className="p-3 rounded-full bg-cyan-500 hover:bg-cyan-400 transition disabled:opacity-50"
+                  className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 transition disabled:opacity-50 shadow-sm"
                 >
                   {isPlaying ? (
                     <Pause className="w-6 h-6 text-white" />
@@ -202,21 +202,21 @@ export default function AnalyticsView() {
 
           {/* Position Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-400 mb-1">X Position</p>
-              <p className="text-xl font-bold text-emerald-400">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm text-center">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">X Position</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-white">
                 {(status.odometry?.x || 0).toFixed(2)}m
               </p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-400 mb-1">Y Position</p>
-              <p className="text-xl font-bold text-cyan-400">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm text-center">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Y Position</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-white">
                 {(status.odometry?.y || 0).toFixed(2)}m
               </p>
             </div>
-            <div className="bg-slate-800/50 rounded-xl p-3 text-center">
-              <p className="text-xs text-slate-400 mb-1">Heading</p>
-              <p className="text-xl font-bold text-purple-400">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm text-center">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Heading</p>
+              <p className="text-xl font-semibold text-slate-900 dark:text-white">
                 {((status.odometry?.theta || 0) * 180 / Math.PI).toFixed(0)}°
               </p>
             </div>
@@ -228,29 +228,29 @@ export default function AnalyticsView() {
       {activeTab === 'sensors' && (
         <div className="space-y-4 flex-1 overflow-auto">
           {/* IMU Data */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
-            <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <Compass className="w-4 h-4 text-blue-400" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Compass className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               IMU Sensors
             </h2>
-            
+
             <div className="grid sm:grid-cols-2 gap-4">
               {/* Accelerometer */}
-              <div className="bg-slate-900/50 rounded-xl p-3">
-                <p className="text-xs text-blue-400 font-medium mb-2">Accelerometer (m/s²)</p>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium mb-2">Accelerometer (m/s²)</p>
                 <div className="space-y-2">
                   {['x', 'y', 'z'].map((axis) => (
                     <div key={axis} className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 w-4 uppercase">{axis}</span>
-                      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 w-4 uppercase">{axis}</span>
+                      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 transition-all"
+                          className="h-full bg-blue-600 transition-all"
                           style={{
                             width: `${Math.min(100, Math.abs((status.imu?.accelerometer[axis as keyof typeof status.imu.accelerometer] || 0) / 15) * 100)}%`,
                           }}
                         />
                       </div>
-                      <span className="text-xs text-slate-300 w-16 text-right font-mono">
+                      <span className="text-xs text-slate-700 dark:text-slate-300 w-16 text-right font-mono">
                         {(status.imu?.accelerometer[axis as keyof typeof status.imu.accelerometer] || 0).toFixed(2)}
                       </span>
                     </div>
@@ -259,21 +259,21 @@ export default function AnalyticsView() {
               </div>
 
               {/* Gyroscope */}
-              <div className="bg-slate-900/50 rounded-xl p-3">
-                <p className="text-xs text-purple-400 font-medium mb-2">Gyroscope (rad/s)</p>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium mb-2">Gyroscope (rad/s)</p>
                 <div className="space-y-2">
                   {['x', 'y', 'z'].map((axis) => (
                     <div key={axis} className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 w-4 uppercase">{axis}</span>
-                      <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 w-4 uppercase">{axis}</span>
+                      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-purple-500 transition-all"
+                          className="h-full bg-blue-600 transition-all"
                           style={{
                             width: `${Math.min(100, Math.abs((status.imu?.gyroscope[axis as keyof typeof status.imu.gyroscope] || 0) / 3) * 100)}%`,
                           }}
                         />
                       </div>
-                      <span className="text-xs text-slate-300 w-16 text-right font-mono">
+                      <span className="text-xs text-slate-700 dark:text-slate-300 w-16 text-right font-mono">
                         {(status.imu?.gyroscope[axis as keyof typeof status.imu.gyroscope] || 0).toFixed(3)}
                       </span>
                     </div>
@@ -284,13 +284,13 @@ export default function AnalyticsView() {
           </div>
 
           {/* LIDAR Visualization */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Target className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                <Target className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                 LIDAR (360° Scan)
               </h2>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {status.lidar?.num_points || 0} points
               </span>
             </div>
@@ -320,25 +320,25 @@ export default function AnalyticsView() {
           </div>
 
           {/* Velocity */}
-          <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4">
-            <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-amber-400" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               Velocity
             </h2>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <p className="text-xs text-slate-400 mb-1">Linear</p>
-                <p className="text-2xl font-bold text-amber-400">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Linear</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                   {(status.odometry?.linear_velocity || 0).toFixed(3)}
                 </p>
-                <p className="text-xs text-slate-500">m/s</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">m/s</p>
               </div>
               <div className="text-center">
-                <p className="text-xs text-slate-400 mb-1">Angular</p>
-                <p className="text-2xl font-bold text-rose-400">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Angular</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
                   {(status.odometry?.angular_velocity || 0).toFixed(3)}
                 </p>
-                <p className="text-xs text-slate-500">rad/s</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">rad/s</p>
               </div>
             </div>
           </div>
@@ -347,26 +347,26 @@ export default function AnalyticsView() {
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
-        <div className="bg-slate-800/50 backdrop-blur border border-white/10 rounded-2xl p-4 flex-1 overflow-auto">
-          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-400" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm flex-1 overflow-auto">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
             Command History
           </h2>
-          
+
           {commandLog.length > 0 ? (
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {commandLog.map((cmd, i) => (
-                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-900/50">
+                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${cmd.success ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                    <span className="text-sm text-white">{cmd.label}</span>
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">{cmd.label}</span>
                   </div>
-                  <span className="text-xs text-slate-500">{cmd.timestamp}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{cmd.timestamp}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-slate-500">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No commands logged yet</p>
             </div>
