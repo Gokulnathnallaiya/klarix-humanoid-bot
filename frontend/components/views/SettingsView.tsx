@@ -313,8 +313,8 @@ export default function SettingsView() {
       {/* About */}
       <div className="bg-slate-800/30 rounded-2xl p-4 text-center">
         <p className="text-xs text-slate-500">
-          NAO Control System v1.0.0<br />
-          Klarix Robotics Lab • Bosch Hackathon S4
+          Klarix Robot Control System v1.0.0<br />
+          Bosch Hackathon S4 • Humanoid Teleoperation
         </p>
       </div>
     </div>

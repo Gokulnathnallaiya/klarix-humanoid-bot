@@ -39,11 +39,33 @@ class NAOController:
         self.turn_left_motion = None
         self.turn_right_motion = None
 
+        # === Simulated Battery & Temperature System ===
+        # Real NAO has ~48.6Wh battery, we simulate based on activity
+        self._battery_capacity = 100.0  # percentage
+        self._battery_level = 100.0  # Start fully charged
+        self._temperature = 32.0  # CPU temperature in Celsius (idle ~32°C)
+        self._ambient_temp = 25.0  # Room temperature
+        self._start_time = time.time()
+        self._last_update_time = time.time()
+        self._motor_activity = 0.0  # 0-1 scale of motor usage
+        self._command_count = 0
+        
+        # Battery drain rates (per second)
+        self._idle_drain_rate = 0.001  # ~0.36% per hour idle
+        self._active_drain_rate = 0.01  # ~3.6% per hour when moving
+        self._camera_drain_rate = 0.002  # Extra drain for camera streaming
+        
+        # Temperature dynamics
+        self._heat_generation_rate = 0.5  # °C per second at full activity
+        self._cooling_rate = 0.1  # °C per second cooling toward ambient
+
         # State
         self.current_state = {
             "connected": True,
             "is_moving": False,
             "current_gesture": None,
+            "battery": 100.0,
+            "temperature": 32.0,
             "imu": {
                 "accelerometer": {"x": 0.0, "y": 0.0, "z": 0.0},
                 "gyroscope": {"x": 0.0, "y": 0.0, "z": 0.0}
@@ -395,6 +417,63 @@ class NAOController:
         except Exception as e:
             print(f"⚠ Error reading depth camera: {e}")
 
+    def update_battery_and_temperature(self):
+        """
+        Simulate realistic battery drain and temperature based on robot activity.
+        Real NAO battery: 48.6Wh, lasts ~90 min active, ~4 hours idle
+        Real NAO operating temp: 0-35°C ambient, CPU can reach 60-70°C under load
+        """
+        current_time = time.time()
+        dt = current_time - self._last_update_time
+        self._last_update_time = current_time
+        
+        # Calculate motor activity level (0-1) based on movement state
+        is_moving = self.current_state.get("is_moving", False)
+        is_camera_active = self.camera is not None and PIL_AVAILABLE
+        
+        # Update motor activity with smoothing
+        target_activity = 1.0 if is_moving else 0.1  # Base idle activity
+        self._motor_activity = self._motor_activity * 0.9 + target_activity * 0.1
+        
+        # === Battery Simulation ===
+        # Idle: ~0.4% per minute, Active: ~1.1% per minute (real NAO values)
+        base_drain = self._idle_drain_rate * dt
+        activity_drain = self._active_drain_rate * self._motor_activity * dt
+        camera_drain = self._camera_drain_rate * dt if is_camera_active else 0
+        
+        total_drain = base_drain + activity_drain + camera_drain
+        self._battery_level = max(0.0, self._battery_level - total_drain)
+        
+        # === Temperature Simulation ===
+        # Heat generation from motor activity
+        heat_generated = self._heat_generation_rate * self._motor_activity * dt
+        
+        # Passive cooling toward ambient temperature
+        temp_diff = self._temperature - self._ambient_temp
+        cooling = self._cooling_rate * (temp_diff / 20.0) * dt  # Faster cooling at higher temps
+        
+        self._temperature = self._temperature + heat_generated - cooling
+        
+        # Clamp temperature to realistic range (25-65°C for robot CPU)
+        self._temperature = max(self._ambient_temp, min(65.0, self._temperature))
+        
+        # Add small random fluctuation for realism
+        import random
+        self._temperature += random.uniform(-0.1, 0.1)
+        
+        # Update state
+        self.current_state["battery"] = round(self._battery_level, 1)
+        self.current_state["temperature"] = round(self._temperature, 1)
+        self.current_state["command_count"] = self._command_count
+
+    def increment_command_count(self):
+        """Called when a command is executed - affects battery drain"""
+        self._command_count += 1
+        # Immediate small battery hit for command processing
+        self._battery_level = max(0.0, self._battery_level - 0.05)
+        # Temporary motor activity spike
+        self._motor_activity = min(1.0, self._motor_activity + 0.3)
+
     def capture_and_send_camera_frame(self):
         """Capture camera frame and send to backend"""
         if not self.camera:
@@ -446,6 +525,9 @@ class NAOController:
     def handle_command(self, command):
         """Handle command from backend"""
         print(f"📥 Command received: {command}")
+        
+        # Track command execution for battery/temp simulation
+        self.increment_command_count()
 
         cmd_type = command.get("type")
 
@@ -467,6 +549,31 @@ class NAOController:
 
         elif cmd_type == "walk":
             self.execute_walking_motion(command.get("movement"))
+
+        elif cmd_type == "stop":
+            self.emergency_stop()
+
+    def emergency_stop(self):
+        """Emergency stop - halt all movement immediately"""
+        print("🛑 EMERGENCY STOP!")
+        
+        # Stop all motions
+        if self.forward_motion and self.forward_motion.isOver() == False:
+            self.forward_motion.stop()
+        if self.backward_motion and self.backward_motion.isOver() == False:
+            self.backward_motion.stop()
+        if self.turn_left_motion and self.turn_left_motion.isOver() == False:
+            self.turn_left_motion.stop()
+        if self.turn_right_motion and self.turn_right_motion.isOver() == False:
+            self.turn_right_motion.stop()
+        
+        # Reset to standing pose
+        self.standing_pose()
+        
+        # Update state
+        self.current_state["is_moving"] = False
+        self.current_state["current_gesture"] = "stand"
+        print("✓ Robot stopped and reset to standing pose")
 
     def update_odometry(self, movement):
         """Update odometry based on movement"""
@@ -602,6 +709,8 @@ class NAOController:
                 self.status_counter += 1
                 if self.status_counter >= 25:
                     self.read_imu_data()
+                    # Update simulated battery and temperature
+                    self.update_battery_and_temperature()
                     # Add joint angles to state
                     self.current_state["joints"] = self.read_joint_angles()
                     self.backend.send_status(self.current_state)

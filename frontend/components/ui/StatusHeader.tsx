@@ -42,8 +42,8 @@ export default function StatusHeader({
             <Cpu className="w-5 h-5 text-white" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-sm font-bold text-white">NAO Control</h1>
-            <p className="text-xs text-slate-400">Klarix Robotics</p>
+            <h1 className="text-sm font-bold text-white">Klarix Robot</h1>
+            <p className="text-xs text-slate-400">Humanoid Control System</p>
           </div>
         </Link>
 

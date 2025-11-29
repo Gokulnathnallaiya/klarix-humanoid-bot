@@ -3,6 +3,7 @@
 import { useRobot } from '@/components/providers/RobotProvider'
 import StatusHeader from '@/components/ui/StatusHeader'
 import BottomNav from '@/components/ui/BottomNav'
+import Sidebar from '@/components/ui/Sidebar'
 import ConnectionScreen from '@/components/views/ConnectionScreen'
 import { ReactNode } from 'react'
 
@@ -27,21 +28,37 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
       </div>
 
-      {/* Header */}
-      <StatusHeader 
+      {/* Desktop Sidebar - hidden on mobile */}
+      <Sidebar 
         robotConnected={status.connected}
         battery={status.battery}
         temperature={status.temperature}
         isMoving={status.is_moving}
       />
 
+      {/* Mobile Header - hidden on desktop */}
+      <div className="lg:hidden">
+        <StatusHeader 
+          robotConnected={status.connected}
+          battery={status.battery}
+          temperature={status.temperature}
+          isMoving={status.is_moving}
+        />
+      </div>
+
       {/* Main Content */}
-      <main className="relative pt-16 pb-20 px-4 max-w-2xl mx-auto">
-        {children}
+      <main className="relative lg:ml-64 pt-16 lg:pt-4 pb-20 lg:pb-4 px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
+      {/* Mobile Bottom Navigation - hidden on desktop */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
+
+      {/* Voice Assistant is now included in Dashboard component */}
     </div>
   )
 }

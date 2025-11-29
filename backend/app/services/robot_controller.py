@@ -14,7 +14,10 @@ class RobotController:
             "gesture": None,
             "head_position": {"yaw": 0.0, "pitch": 0.0},
             "motor_positions": {},
-            "is_moving": False
+            "is_moving": False,
+            "battery": 100.0,  # Will be updated from Webots
+            "temperature": 32.0,  # Will be updated from Webots
+            "command_count": 0
         }
         self.subscribers: List[asyncio.Queue] = []
 
@@ -50,6 +53,26 @@ class RobotController:
         """Disconnect from robot (note: Webots manages its own connection)"""
         print("Robot controller: disconnect requested")
         return {"success": True, "message": "Disconnect requested"}
+
+    async def stop(self) -> Dict:
+        """Emergency stop - halt all robot movement"""
+        if not self.connected or not self.webots_bridge:
+            return {"success": False, "error": "Not connected"}
+
+        command = {
+            "type": "stop",
+            "immediate": True
+        }
+
+        success = await self.webots_bridge.send_command(command)
+        if success:
+            self.current_state["is_moving"] = False
+            self.current_state["gesture"] = None
+            await self._notify_subscribers()
+            print("🛑 Emergency STOP sent to robot")
+            return {"success": True, "message": "Robot stopped"}
+        else:
+            return {"success": False, "error": "Failed to send stop command"}
 
     async def send_gesture(self, gesture: str) -> Dict:
         """Send gesture command to robot"""
@@ -150,13 +173,21 @@ class RobotController:
         return {"success": True, "command": command}
 
     async def get_status(self) -> Dict:
-        """Get current robot status"""
+        """Get current robot status - uses real values from Webots simulation"""
         # Import here to avoid circular dependency
         from .vision_service import vision_service
 
+        # Battery and temperature come directly from Webots simulation
+        battery = self.current_state.get("battery", 100.0)
+        temperature = self.current_state.get("temperature", 32.0)
+        command_count = self.current_state.get("command_count", 0)
+
         status = {
             "connected": self.connected,
-            "current_gesture": self.current_state.get("gesture"),
+            "battery": round(battery, 1),
+            "temperature": round(temperature, 1),
+            "cycle_count": command_count,
+            "current_gesture": self.current_state.get("gesture") or self.current_state.get("current_gesture"),
             "head_position": self.current_state.get("head_position"),
             "is_moving": self.current_state.get("is_moving"),
             "motor_positions": self.current_state.get("motor_positions"),

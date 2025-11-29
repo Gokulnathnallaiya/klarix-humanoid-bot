@@ -159,7 +159,7 @@ export default function ConnectionScreen() {
             />
             <PrerequisiteItem 
               number={3}
-              title="NAO Controller"
+              title="Klarix Controller"
               description="Active in Webots"
             />
           </div>
