@@ -33,26 +33,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
       />
 
       {/* Mobile Header - hidden on desktop */}
-      <div className="lg:hidden flex-shrink-0">
-        <StatusHeader
-          robotConnected={status.connected}
-          battery={status.battery}
-          temperature={status.temperature}
-          isMoving={status.is_moving}
-        />
-      </div>
+      <StatusHeader
+        robotConnected={status.connected}
+        battery={status.battery}
+        temperature={status.temperature}
+        isMoving={status.is_moving}
+      />
 
       {/* Main Content */}
-      <main className="relative flex-1 lg:ml-64 overflow-auto px-4 lg:px-8 pt-4 pb-4 lg:pt-6 lg:pb-6">
+      <main className="relative flex-1 lg:ml-64 overflow-auto px-4 lg:px-8 pt-16 lg:pt-6 pb-20 lg:pb-6">
         <div className="max-w-7xl mx-auto h-full">
           {children}
         </div>
       </main>
 
       {/* Mobile Bottom Navigation - hidden on desktop */}
-      <div className="lg:hidden flex-shrink-0">
-        <BottomNav />
-      </div>
+      <BottomNav />
 
       {/* Voice Assistant is now included in Dashboard component */}
     </div>

@@ -12,7 +12,7 @@ import {
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home, description: 'Overview & quick actions' },
   { href: '/teleop', label: 'Teleoperation', icon: Gamepad2, description: 'Manual robot control' },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3, description: 'Path & sensor data' },
+  { href: '/analytics', label: 'Sensors', icon: BarChart3, description: 'IMU, LIDAR & telemetry' },
   { href: '/settings', label: 'Settings', icon: Settings, description: 'Configuration & OTA' },
 ]
 

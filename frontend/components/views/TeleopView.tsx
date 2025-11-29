@@ -2,10 +2,9 @@
 
 import { useRobot } from '@/components/providers/RobotProvider'
 import CameraFeed from '@/components/ui/CameraFeed'
-import VisionPanel from '@/components/ui/VisionPanel'
 import KinematicsPanel from '@/components/ui/KinematicsPanel'
 import VoiceAssistant from '@/components/ui/VoiceAssistant'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { 
   ArrowUp, ArrowDown, ArrowLeft, ArrowRight, 
   Hand, Pointer, User, Eye, Maximize2, Minimize2,
@@ -18,7 +17,6 @@ export default function TeleopView() {
   const [fullscreen, setFullscreen] = useState(false)
   const [showOverlay, setShowOverlay] = useState(true)
   const [showPanels, setShowPanels] = useState(true)
-  const joystickRef = useRef<HTMLDivElement>(null)
   const [joystickActive, setJoystickActive] = useState(false)
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 })
 
@@ -32,9 +30,10 @@ export default function TeleopView() {
   }
 
   const handleJoystickMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!joystickRef.current) return
-    
-    const rect = joystickRef.current.getBoundingClientRect()
+    const joystickElement = e.currentTarget as HTMLDivElement
+    if (!joystickElement) return
+
+    const rect = joystickElement.getBoundingClientRect()
     const centerX = rect.left + rect.width / 2
     const centerY = rect.top + rect.height / 2
     
@@ -132,14 +131,14 @@ export default function TeleopView() {
           <div className={`relative ${fullscreen ? 'fixed inset-0 z-50 bg-black' : ''}`}>
             {/* Camera Feed */}
             <div className={`relative ${fullscreen ? 'h-full' : 'aspect-video lg:aspect-[16/9]'} bg-black rounded-2xl overflow-hidden`}>
-              <CameraFeed 
-                isConnected={isConnected} 
+              <CameraFeed
+                isConnected={isConnected}
                 className="w-full h-full"
                 showControls={false}
               />
-              
-              {/* Overlay Controls */}
-              {showOverlay && (
+
+              {/* Overlay Controls - Desktop Only */}
+              {showOverlay && !fullscreen && (
                 <>
                   {/* Top Bar */}
                   <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent">
@@ -171,12 +170,11 @@ export default function TeleopView() {
                     </div>
                   </div>
 
-                  {/* Bottom Controls */}
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                  {/* Bottom Controls - Desktop Only */}
+                  <div className="hidden lg:block absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
                     <div className="flex items-end justify-between gap-4">
                       {/* Virtual Joystick */}
                       <div
-                        ref={joystickRef}
                         className="relative w-32 h-32 lg:w-36 lg:h-36 rounded-full bg-white/10 border-2 border-white/30 touch-none"
                         onTouchStart={handleJoystickStart}
                         onTouchMove={joystickActive ? handleJoystickMove : undefined}
@@ -241,12 +239,81 @@ export default function TeleopView() {
             </div>
           </div>
 
-          {/* Desktop: Vision Panel below camera */}
-          {!fullscreen && showPanels && (
-            <div className="hidden lg:block">
-              <VisionPanel isConnected={isConnected} />
+          {/* Mobile Controls - Below Camera */}
+          <div className="lg:hidden grid grid-cols-2 gap-3">
+            {/* Virtual Joystick for Mobile */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-3 text-center">Movement</p>
+              <div className="flex justify-center">
+                <div
+                  className="relative w-40 h-40 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700"
+                  onTouchStart={handleJoystickStart}
+                  onTouchMove={joystickActive ? handleJoystickMove : undefined}
+                  onTouchEnd={handleJoystickEnd}
+                  style={{ touchAction: 'none' }}
+                >
+                  {/* Direction indicators */}
+                  <ArrowUp className="absolute top-3 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <ArrowDown className="absolute bottom-3 left-1/2 -translate-x-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <ArrowLeft className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                  <ArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
+
+                  {/* Joystick knob */}
+                  <div
+                    className={`absolute w-16 h-16 rounded-full bg-blue-600 shadow-lg transition-transform ${
+                      joystickActive ? 'scale-110' : ''
+                    }`}
+                    style={{
+                      left: `calc(50% + ${joystickPos.x}px - 32px)`,
+                      top: `calc(50% + ${joystickPos.y}px - 32px)`,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          )}
+
+            {/* Gesture & Head Controls */}
+            <div className="space-y-3">
+              {/* Gestures */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Gestures</p>
+                <div className="flex gap-2">
+                  {gestures.map((gesture) => (
+                    <button
+                      key={gesture.value}
+                      onClick={() => sendCommand('/api/robot/gesture', { gesture: gesture.value }, gesture.label)}
+                      disabled={controlsDisabled}
+                      className="flex-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700
+                        transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <gesture.icon className="w-6 h-6 mx-auto text-slate-700 dark:text-slate-300" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Head Control */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm">
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Head</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {headDirections.map((dir) => (
+                    <button
+                      key={dir.value}
+                      onClick={() => sendCommand('/api/robot/head/move', { direction: dir.value }, `Head ${dir.label}`)}
+                      disabled={controlsDisabled}
+                      className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700
+                        transition disabled:opacity-50"
+                      style={{ gridArea: dir.gridArea }}
+                    >
+                      <dir.icon className="w-5 h-5 mx-auto text-slate-700 dark:text-slate-300" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         {/* Right Sidebar - Desktop */}
@@ -288,13 +355,6 @@ export default function TeleopView() {
           </div>
         </div>
       </div>
-
-      {/* Mobile Only: Vision Panel */}
-      {!fullscreen && showPanels && (
-        <div className="lg:hidden mt-4">
-          <VisionPanel isConnected={isConnected} />
-        </div>
-      )}
 
       {/* Voice Assistant - Floating Panel */}
       <VoiceAssistant />

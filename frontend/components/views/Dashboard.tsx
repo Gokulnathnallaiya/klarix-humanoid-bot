@@ -104,7 +104,7 @@ export default function Dashboard() {
                 Robot Path Trace
               </h2>
               <Link href="/analytics" className="text-xs lg:text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                Full Analytics →
+                View Sensors →
               </Link>
             </div>
             <div className="aspect-square lg:aspect-[2/1] bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden relative">
