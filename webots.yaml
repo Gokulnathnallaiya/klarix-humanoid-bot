@@ -1,0 +1,18 @@
+# webots.yaml - configuration for Webots Cloud
+# This file must be at the repository root for Webots Cloud to detect it.
+
+publish: true
+version: 1.2.2
+title: Klarix Humanoid Bot - NAO Office Demo
+description: NAO robot office demonstration with camera streaming, kinematics, and AI vision
+license: MIT
+url: https://github.com/Gokulnathnallaiya/klarix-humanoid-bot
+
+# Supported Webots versions (R2022b or newer required by Webots Cloud)
+webots_version: R2023b
+
+# Relative path to the world file inside the repository
+world: webots/worlds/nao_office_demo.wbt
+
+# Python dependencies for the controller (pip install)
+pip: webots/requirements-webots.txt
