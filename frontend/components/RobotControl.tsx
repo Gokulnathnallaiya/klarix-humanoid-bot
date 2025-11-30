@@ -506,7 +506,7 @@ export default function RobotControl() {
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
-          <VisionPanel visionData={status.vision} apiBase={API_BASE} />
+          <VisionPanel visionData={status.vision} apiBase={API_CONFIG.BASE_URL} />
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
