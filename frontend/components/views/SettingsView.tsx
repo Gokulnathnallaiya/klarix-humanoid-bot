@@ -7,6 +7,8 @@ import {
   Battery, Thermometer, Activity, Wifi, Server, RefreshCw, RotateCcw
 } from 'lucide-react'
 
+import { API_CONFIG } from '@/lib/config'
+
 interface OTAVersion {
   version: string
   uploaded_at?: string
@@ -32,12 +34,11 @@ export default function SettingsView() {
   }, null, 2))
 
   const isConnected = connectionState === 'connected'
-  const API_BASE = 'http://localhost:8000'
 
   // Fetch OTA history
   const fetchOTAHistory = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/robot/ota/history`)
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/robot/ota/history`)
       if (response.ok) {
         const data = await response.json()
         setCurrentVersion(data.current_version)
@@ -67,7 +68,7 @@ export default function SettingsView() {
         newVersion = `v${major}.${minor}.${parseInt(patch) + 1}`
       }
       
-      const response = await fetch(`${API_BASE}/api/robot/ota/update`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/robot/ota/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -96,7 +97,7 @@ export default function SettingsView() {
     setError(null)
     
     try {
-      const response = await fetch(`${API_BASE}/api/robot/ota/rollback`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/robot/ota/rollback`, {
         method: 'POST'
       })
       

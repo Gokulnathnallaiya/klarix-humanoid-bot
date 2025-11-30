@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Sparkles, Send, Loader2, Eye, AlertCircle, Lightbulb, Box, MapPin, Shield, Zap } from 'lucide-react'
 import { tts } from '@/lib/speechServices'
+import { API_CONFIG } from '@/lib/config'
 
 interface VisionPanelProps {
   isConnected: boolean
@@ -23,8 +24,6 @@ export default function VisionPanel({ isConnected, className = '' }: VisionPanel
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE = 'http://localhost:8000'
-
   const analyzeScene = useCallback(async () => {
     if (!isConnected) return
 
@@ -32,7 +31,7 @@ export default function VisionPanel({ isConnected, className = '' }: VisionPanel
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE}/api/vision/analyze`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/vision/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
@@ -65,7 +64,7 @@ export default function VisionPanel({ isConnected, className = '' }: VisionPanel
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE}/api/vision/query`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/vision/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: question.trim() })

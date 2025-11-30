@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react'
+import { API_CONFIG, getWsUrl } from '@/lib/config'
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error'
 
@@ -99,8 +100,6 @@ export function RobotProvider({ children }: RobotProviderProps) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const API_BASE = 'http://localhost:8000'
-
   // Cleanup WebSocket
   const cleanupWebSocket = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -120,7 +119,7 @@ export function RobotProvider({ children }: RobotProviderProps) {
     
     try {
       // Step 1: Check if backend is reachable
-      const healthCheck = await fetch(`${API_BASE}/api/robot/status`, {
+      const healthCheck = await fetch(`${API_CONFIG.BASE_URL}/api/robot/status`, {
         method: 'GET',
         signal: AbortSignal.timeout(5000)
       }).catch(() => null)
@@ -130,7 +129,7 @@ export function RobotProvider({ children }: RobotProviderProps) {
       }
 
       // Step 2: Connect to robot via API (checks if Webots is connected)
-      const connectResponse = await fetch(`${API_BASE}/api/robot/connect`, {
+      const connectResponse = await fetch(`${API_CONFIG.BASE_URL}/api/robot/connect`, {
         method: 'POST',
         signal: AbortSignal.timeout(5000)
       })
@@ -145,7 +144,7 @@ export function RobotProvider({ children }: RobotProviderProps) {
       return new Promise<void>((resolve, reject) => {
         cleanupWebSocket()
         
-        const ws = new WebSocket('ws://localhost:8000/api/robot/ws')
+        const ws = new WebSocket(getWsUrl('/api/robot/ws'))
         wsRef.current = ws
         
         const connectionTimeout = setTimeout(() => {
@@ -242,7 +241,7 @@ export function RobotProvider({ children }: RobotProviderProps) {
     cleanupWebSocket()
     
     try {
-      await fetch(`${API_BASE}/api/robot/disconnect`, { method: 'POST' }).catch(() => {})
+      await fetch(`${API_CONFIG.BASE_URL}/api/robot/disconnect`, { method: 'POST' }).catch(() => {})
     } catch {
       // Ignore disconnect errors
     }
@@ -290,7 +289,7 @@ export function RobotProvider({ children }: RobotProviderProps) {
 
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

@@ -150,7 +150,7 @@ export default function ConnectionScreen() {
             <PrerequisiteItem
               number={1}
               title="Backend Server"
-              description="Running on localhost:8000"
+              description="Running on port 8000"
             />
             <PrerequisiteItem
               number={2}

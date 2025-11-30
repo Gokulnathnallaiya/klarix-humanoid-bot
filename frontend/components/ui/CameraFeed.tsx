@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Eye, RefreshCw } from 'lucide-react'
+import { API_CONFIG } from '@/lib/config'
 
 interface CameraFeedProps {
   isConnected: boolean
@@ -15,7 +16,7 @@ export default function CameraFeed({ isConnected, className = '', showControls =
   const [streamKey, setStreamKey] = useState(Date.now())
   const imgRef = useRef<HTMLImageElement>(null)
 
-  const STREAM_URL = 'http://localhost:8000/api/robot/camera/stream'
+  const STREAM_URL = API_CONFIG.CAMERA_FEED_URL
 
   // Refresh the stream
   const refreshStream = () => {

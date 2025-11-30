@@ -12,6 +12,8 @@ import { tts, sfx } from '@/lib/speechServices'
 type SpeechRecognitionType = typeof window extends { SpeechRecognition: infer T } ? T : any
 type SpeechRecognitionInstance = InstanceType<SpeechRecognitionType> | null
 
+import { API_CONFIG } from '@/lib/config'
+
 interface ConversationItem {
   id: string
   type: 'user' | 'assistant'
@@ -19,8 +21,6 @@ interface ConversationItem {
   commands?: Array<{ type: string; action: string; success?: boolean }>
   timestamp: Date
 }
-
-const API_BASE = 'http://localhost:8000'
 
 export default function VoiceAssistant() {
   const { connectionState, status, sendCommand } = useRobot()
@@ -101,7 +101,7 @@ export default function VoiceAssistant() {
     if (lowerText.includes('stop') || lowerText.includes('halt') || lowerText.includes('freeze')) {
       // Immediate stop - don't wait for AI
       try {
-        await fetch(`${API_BASE}/api/robot/stop`, { method: 'POST' })
+        await fetch(`${API_CONFIG.BASE_URL}/api/robot/stop`, { method: 'POST' })
         if (voiceEnabled) {
           await sfx.acknowledge()
           tts.speak("Stopping!")
@@ -122,7 +122,7 @@ export default function VoiceAssistant() {
 
     try {
       // Call AI backend
-      const response = await fetch(`${API_BASE}/api/robot/ai/chat`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/robot/ai/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +207,7 @@ export default function VoiceAssistant() {
   const handleEmergencyStop = async () => {
     try {
       tts.stop()
-      await fetch(`${API_BASE}/api/robot/stop`, { method: 'POST' })
+      await fetch(`${API_CONFIG.BASE_URL}/api/robot/stop`, { method: 'POST' })
       if (voiceEnabled) {
         await sfx.error()
         tts.speak("Emergency stop!")

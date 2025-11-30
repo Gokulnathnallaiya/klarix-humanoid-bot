@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { tts, sfx, voiceFeedback } from '@/lib/speechServices'
 import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '@/types/speech.d'
+import { API_CONFIG } from '@/lib/config'
 
 interface Message {
   id: string
@@ -21,8 +22,6 @@ interface Message {
   }>
   timestamp: Date
 }
-
-const API_BASE = 'http://localhost:8000'
 
 export default function AIChatAssistant() {
   const { connectionState, status } = useRobot()
@@ -141,7 +140,7 @@ export default function AIChatAssistant() {
 
     try {
       // Call the AI backend endpoint
-      const response = await fetch(`${API_BASE}/api/robot/ai/chat`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/robot/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

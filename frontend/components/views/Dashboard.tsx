@@ -11,8 +11,7 @@ import {
   Eye, Zap, Clock, StopCircle
 } from 'lucide-react'
 import Link from 'next/link'
-
-const API_BASE = 'http://localhost:8000'
+import { API_CONFIG } from '@/lib/config'
 
 export default function Dashboard() {
   const { status, connectionState, loading, sendCommand, commandLog, clearAlerts } = useRobot()
@@ -249,7 +248,7 @@ export default function Dashboard() {
             <button
               onClick={async () => {
                 try {
-                  await fetch(`${API_BASE}/api/robot/stop`, { method: 'POST' })
+                  await fetch(`${API_CONFIG.BASE_URL}/api/robot/stop`, { method: 'POST' })
                 } catch (e) {
                   console.error('Stop failed:', e)
                 }
