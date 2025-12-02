@@ -39,11 +39,33 @@ class NAOController:
         self.turn_left_motion = None
         self.turn_right_motion = None
 
+        # === Simulated Battery & Temperature System ===
+        # Real NAO has ~48.6Wh battery, we simulate based on activity
+        self._battery_capacity = 100.0  # percentage
+        self._battery_level = 100.0  # Start fully charged
+        self._temperature = 32.0  # CPU temperature in Celsius (idle ~32°C)
+        self._ambient_temp = 25.0  # Room temperature
+        self._start_time = time.time()
+        self._last_update_time = time.time()
+        self._motor_activity = 0.0  # 0-1 scale of motor usage
+        self._command_count = 0
+        
+        # Battery drain rates (per second)
+        self._idle_drain_rate = 0.001  # ~0.36% per hour idle
+        self._active_drain_rate = 0.01  # ~3.6% per hour when moving
+        self._camera_drain_rate = 0.002  # Extra drain for camera streaming
+        
+        # Temperature dynamics
+        self._heat_generation_rate = 0.5  # °C per second at full activity
+        self._cooling_rate = 0.1  # °C per second cooling toward ambient
+
         # State
         self.current_state = {
             "connected": True,
             "is_moving": False,
             "current_gesture": None,
+            "battery": 100.0,
+            "temperature": 32.0,
             "imu": {
                 "accelerometer": {"x": 0.0, "y": 0.0, "z": 0.0},
                 "gyroscope": {"x": 0.0, "y": 0.0, "z": 0.0}
@@ -76,6 +98,12 @@ class NAOController:
         # Counters
         self.status_counter = 0
         self.camera_counter = 0
+        
+        # Joint position sensors
+        self.position_sensors = {}
+        
+        # Motor limits for kinematics display
+        self.motor_limits = {}
 
     def initialize(self):
         """Initialize all robot devices"""
@@ -91,7 +119,7 @@ class NAOController:
         self._init_motions()
 
     def _init_motors(self):
-        """Initialize all motors"""
+        """Initialize all motors and position sensors"""
         motor_names = [
             'HeadYaw', 'HeadPitch',
             'LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw',
@@ -104,8 +132,20 @@ class NAOController:
             motor = self.robot.getDevice(name)
             if motor:
                 self.motors[name] = motor
+                # Store motor limits
+                self.motor_limits[name] = {
+                    'min': motor.getMinPosition(),
+                    'max': motor.getMaxPosition()
+                }
+                # Enable position sensor for this motor
+                sensor_name = name + 'S'
+                sensor = self.robot.getDevice(sensor_name)
+                if sensor:
+                    sensor.enable(self.timestep)
+                    self.position_sensors[name] = sensor
 
         print(f"✓ Initialized {len(self.motors)} motors")
+        print(f"✓ Initialized {len(self.position_sensors)} position sensors")
 
     def _init_camera(self):
         """Initialize camera and display"""
@@ -182,7 +222,28 @@ class NAOController:
     def _init_motions(self):
         """Load motion files"""
         print("Loading motion files...")
-        motion_path = "/usr/local/webots/projects/robots/softbank/nao/motions/"
+        
+        # Try multiple possible motion file paths (macOS, Linux, Windows)
+        motion_paths = [
+            "/Applications/Webots.app/Contents/projects/robots/softbank/nao/motions/",  # macOS
+            "/usr/local/webots/projects/robots/softbank/nao/motions/",  # Linux
+            "C:/Program Files/Webots/projects/robots/softbank/nao/motions/",  # Windows
+        ]
+        
+        motion_path = None
+        for path in motion_paths:
+            try:
+                import os
+                if os.path.exists(path + "Forwards.motion"):
+                    motion_path = path
+                    print(f"✓ Found motion files at: {path}")
+                    break
+            except:
+                continue
+        
+        if not motion_path:
+            print("⚠ Motion files not found - walking will use fallback mode")
+            return
 
         try:
             self.forward_motion = Motion(motion_path + "Forwards.motion")
@@ -298,6 +359,19 @@ class NAOController:
         except Exception as e:
             print(f"⚠ Error reading IMU: {e}")
 
+    def read_joint_angles(self):
+        """Read all joint position sensors and return angles in degrees"""
+        joint_angles = {}
+        for name, sensor in self.position_sensors.items():
+            try:
+                value = sensor.getValue()
+                if value != float('inf') and value != float('-inf'):
+                    # Convert to degrees for display
+                    joint_angles[name] = round(math.degrees(value), 1)
+            except:
+                pass
+        return joint_angles
+
     def read_lidar_data(self):
         """Read LIDAR sensor data and update state"""
         if not self.lidar:
@@ -343,9 +417,72 @@ class NAOController:
         except Exception as e:
             print(f"⚠ Error reading depth camera: {e}")
 
+    def update_battery_and_temperature(self):
+        """
+        Simulate realistic battery drain and temperature based on robot activity.
+        Real NAO battery: 48.6Wh, lasts ~90 min active, ~4 hours idle
+        Real NAO operating temp: 0-35°C ambient, CPU can reach 60-70°C under load
+        """
+        current_time = time.time()
+        dt = current_time - self._last_update_time
+        self._last_update_time = current_time
+        
+        # Calculate motor activity level (0-1) based on movement state
+        is_moving = self.current_state.get("is_moving", False)
+        is_camera_active = self.camera is not None and PIL_AVAILABLE
+        
+        # Update motor activity with smoothing
+        target_activity = 1.0 if is_moving else 0.1  # Base idle activity
+        self._motor_activity = self._motor_activity * 0.9 + target_activity * 0.1
+        
+        # === Battery Simulation ===
+        # Idle: ~0.4% per minute, Active: ~1.1% per minute (real NAO values)
+        base_drain = self._idle_drain_rate * dt
+        activity_drain = self._active_drain_rate * self._motor_activity * dt
+        camera_drain = self._camera_drain_rate * dt if is_camera_active else 0
+        
+        total_drain = base_drain + activity_drain + camera_drain
+        self._battery_level = max(0.0, self._battery_level - total_drain)
+        
+        # === Temperature Simulation ===
+        # Heat generation from motor activity
+        heat_generated = self._heat_generation_rate * self._motor_activity * dt
+        
+        # Passive cooling toward ambient temperature
+        temp_diff = self._temperature - self._ambient_temp
+        cooling = self._cooling_rate * (temp_diff / 20.0) * dt  # Faster cooling at higher temps
+        
+        self._temperature = self._temperature + heat_generated - cooling
+        
+        # Clamp temperature to realistic range (25-65°C for robot CPU)
+        self._temperature = max(self._ambient_temp, min(65.0, self._temperature))
+        
+        # Add small random fluctuation for realism
+        import random
+        self._temperature += random.uniform(-0.1, 0.1)
+        
+        # Update state
+        self.current_state["battery"] = round(self._battery_level, 1)
+        self.current_state["temperature"] = round(self._temperature, 1)
+        self.current_state["command_count"] = self._command_count
+
+    def increment_command_count(self):
+        """Called when a command is executed - affects battery drain"""
+        self._command_count += 1
+        # Immediate small battery hit for command processing
+        self._battery_level = max(0.0, self._battery_level - 0.05)
+        # Temporary motor activity spike
+        self._motor_activity = min(1.0, self._motor_activity + 0.3)
+
     def capture_and_send_camera_frame(self):
         """Capture camera frame and send to backend"""
-        if not (self.camera and PIL_AVAILABLE):
+        if not self.camera:
+            return False
+            
+        if not PIL_AVAILABLE:
+            return False
+            
+        if not self.backend or not self.backend.is_connected():
             return False
 
         try:
@@ -364,11 +501,16 @@ class NAOController:
             # Convert BGRA to RGB and encode as JPEG
             img = Image.frombytes('RGBA', (width, height), camera_image, 'raw', 'BGRA')
             img_rgb = img.convert('RGB')
+            
+            # Resize to reduce bandwidth (optional - 320x240)
+            img_rgb = img_rgb.resize((320, 240), Image.Resampling.LANCZOS)
+            
             buffer = io.BytesIO()
-            img_rgb.save(buffer, format='JPEG', quality=85)
+            img_rgb.save(buffer, format='JPEG', quality=70)  # Lower quality for faster streaming
             jpeg_data = buffer.getvalue()
+            buffer.close()
 
-            # Send to backend
+            # Send to backend (non-blocking)
             frame_b64 = base64.b64encode(jpeg_data).decode('utf-8')
             return self.backend.send_status({
                 "type": "camera_frame",
@@ -383,6 +525,9 @@ class NAOController:
     def handle_command(self, command):
         """Handle command from backend"""
         print(f"📥 Command received: {command}")
+        
+        # Track command execution for battery/temp simulation
+        self.increment_command_count()
 
         cmd_type = command.get("type")
 
@@ -404,6 +549,31 @@ class NAOController:
 
         elif cmd_type == "walk":
             self.execute_walking_motion(command.get("movement"))
+
+        elif cmd_type == "stop":
+            self.emergency_stop()
+
+    def emergency_stop(self):
+        """Emergency stop - halt all movement immediately"""
+        print("🛑 EMERGENCY STOP!")
+        
+        # Stop all motions
+        if self.forward_motion and self.forward_motion.isOver() == False:
+            self.forward_motion.stop()
+        if self.backward_motion and self.backward_motion.isOver() == False:
+            self.backward_motion.stop()
+        if self.turn_left_motion and self.turn_left_motion.isOver() == False:
+            self.turn_left_motion.stop()
+        if self.turn_right_motion and self.turn_right_motion.isOver() == False:
+            self.turn_right_motion.stop()
+        
+        # Reset to standing pose
+        self.standing_pose()
+        
+        # Update state
+        self.current_state["is_moving"] = False
+        self.current_state["current_gesture"] = "stand"
+        print("✓ Robot stopped and reset to standing pose")
 
     def update_odometry(self, movement):
         """Update odometry based on movement"""
@@ -495,26 +665,62 @@ class NAOController:
         # Set initial pose
         self.standing_pose()
 
+        # Track reconnection attempts
+        reconnect_cooldown = 0
+
         # Main loop
-        while self.robot.step(self.timestep) != -1:
-            # Process camera every step (send every 10 steps)
-            if self.camera:
-                self.camera_counter += 1
-                if self.camera_counter >= 10:  # ~5 FPS
-                    self.capture_and_send_camera_frame()
-                    self.camera_counter = 0
+        try:
+            while self.robot.step(self.timestep) != -1:
+                # Check if backend is still connected
+                if not self.backend.is_connected():
+                    # Try to reconnect with cooldown
+                    if reconnect_cooldown <= 0:
+                        print("🔄 Attempting to reconnect to backend...")
+                        self.backend.disconnect()  # Clean up old connection
+                        self.backend = BackendClient()
+                        if self.backend.connect(max_retries=2, retry_delay=1):
+                            self.backend.start_listening(self.handle_command)
+                            print("✓ Reconnected to backend!\n")
+                            reconnect_cooldown = 0
+                        else:
+                            print("⚠ Backend not available, will retry in 5 seconds...")
+                            reconnect_cooldown = 5 * 1000 // self.timestep  # 5 seconds worth of steps
+                    else:
+                        reconnect_cooldown -= 1
+                    
+                    # Continue running even without backend (camera display, etc)
+                    if self.camera and self.display:
+                        camera_image = self.camera.getImage()
+                        if camera_image:
+                            self.display.imagePaste(camera_image, 0, 0)
+                    continue
+                
+                # Reset reconnect cooldown when connected
+                reconnect_cooldown = 0
+                
+                # Process camera every 5 steps (~10 FPS for smoother video)
+                if self.camera and PIL_AVAILABLE:
+                    self.camera_counter += 1
+                    if self.camera_counter >= 5:
+                        self.capture_and_send_camera_frame()
+                        self.camera_counter = 0
 
-            # Send status updates every 100 steps (~2 seconds)
-            self.status_counter += 1
-            if self.status_counter >= 100:
-                self.read_imu_data()
-                self.read_lidar_data()
-                self.read_depth_data()
-                self.backend.send_status(self.current_state)
-                self.status_counter = 0
+                # Send status updates every 25 steps (~0.5 second for more responsive UI)
+                self.status_counter += 1
+                if self.status_counter >= 25:
+                    self.read_imu_data()
+                    # Update simulated battery and temperature
+                    self.update_battery_and_temperature()
+                    # Add joint angles to state
+                    self.current_state["joints"] = self.read_joint_angles()
+                    self.backend.send_status(self.current_state)
+                    self.status_counter = 0
 
-            # Small delay to prevent busy loop
-            time.sleep(0.001)
+        except Exception as e:
+            print(f"✗ Error in main loop: {e}")
+        finally:
+            if self.backend:
+                self.backend.disconnect()
 
     def _run_standalone(self):
         """Run in standalone mode without backend"""

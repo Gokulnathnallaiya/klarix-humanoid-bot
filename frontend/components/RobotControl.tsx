@@ -20,8 +20,9 @@ import {
   Compass
 } from 'lucide-react'
 import VisionPanel from './VisionPanel'
+import { API_CONFIG, getWsUrl } from '@/lib/config'
 
-const CAMERA_FEED_URL = (process.env.NEXT_PUBLIC_CAMERA_FEED_URL || '').trim()
+const CAMERA_FEED_URL = API_CONFIG.CAMERA_FEED_URL
 
 interface RobotStatus {
   connected: boolean
@@ -88,13 +89,12 @@ export default function RobotControl() {
   const [walkDuration, setWalkDuration] = useState(2)
   const [cameraError, setCameraError] = useState(false)
 
-  const API_BASE = 'http://localhost:8000'
   const cameraReady = Boolean(CAMERA_FEED_URL) && !cameraError
   const controlsDisabled = loading || !wsConnected
 
   useEffect(() => {
     const connectWebSocket = () => {
-      const ws = new WebSocket('ws://localhost:8000/api/robot/ws')
+      const ws = new WebSocket(getWsUrl('/api/robot/ws'))
 
       ws.onopen = () => setWsConnected(true)
       ws.onmessage = (event) => setStatus(JSON.parse(event.data))
@@ -114,7 +114,7 @@ export default function RobotControl() {
   useEffect(() => {
     const connectRobot = async () => {
       try {
-        await fetch(`${API_BASE}/api/robot/connect`, { method: 'POST' })
+        await fetch(`${API_CONFIG.BASE_URL}/api/robot/connect`, { method: 'POST' })
       } catch (error) {
         console.error('Failed to connect to robot:', error)
       }
@@ -141,7 +141,7 @@ export default function RobotControl() {
   ) => {
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -154,7 +154,7 @@ export default function RobotControl() {
       logCommand(label)
     } catch (error) {
       console.error('Command failed:', error)
-      alert('Command failed. Ensure the backend is running on http://localhost:8000')
+      alert(`Command failed. Ensure the backend is running on ${API_CONFIG.BASE_URL}`)
     } finally {
       setLoading(false)
     }
@@ -506,7 +506,7 @@ export default function RobotControl() {
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">
-          <VisionPanel visionData={status.vision} apiBase={API_BASE} />
+          <VisionPanel visionData={status.vision} apiBase={API_CONFIG.BASE_URL} />
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 text-white">

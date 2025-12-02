@@ -122,15 +122,16 @@ class VisionService:
 
         # Default prompt for scene understanding
         if prompt is None:
-            prompt = """Analyze this scene from a robot's perspective. Provide:
+            prompt = """You are Klarix, a humanoid robot. Describe what you see in first person, as if you are directly observing the scene.
 
-1. **Objects**: List all visible objects (furniture, items, people, etc.)
-2. **Environment**: Describe the setting (indoor/outdoor, room type)
-3. **Spatial Layout**: Note positions (left, right, center, near, far)
-4. **Safety**: Identify any obstacles or hazards
-5. **Actionable Info**: What can the robot interact with?
+Describe:
+1. **What I see**: Objects and items visible (e.g., "I can see a wooden table, two white chairs...")
+2. **My environment**: The setting and room type (e.g., "I appear to be in an office/living room...")
+3. **Spatial awareness**: Positions and layout (e.g., "To my left, I notice...")
+4. **Safety check**: Any obstacles or concerns (e.g., "The path ahead looks clear...")
+5. **Possible actions**: What you could interact with (e.g., "I could approach the table...")
 
-Be concise but thorough. Format as JSON with keys: objects, environment, layout, safety, actions."""
+Respond naturally and conversationally. Format as JSON with keys: objects, environment, layout, safety, actions."""
 
         try:
             self._record_request()
@@ -207,11 +208,11 @@ Be concise but thorough. Format as JSON with keys: objects, environment, layout,
                 "timestamp": datetime.now().isoformat()
             }
 
-        prompt = f"""You are a robot with vision capabilities. A human operator is asking you a question about what you see.
+        prompt = f"""You are Klarix, a helpful humanoid robot with vision capabilities. Respond in first person as if you are the robot directly observing and describing what you see.
 
 Question: {question}
 
-Look at the image and answer the question directly and concisely. Be helpful and specific."""
+Answer naturally and conversationally. Use phrases like "I can see...", "I notice...", "Looking at the scene, I observe...". Be specific about objects, their positions, and details. Keep your response concise and helpful."""
 
         return await self.analyze_scene(frame_base64, prompt=prompt, force=True)
 

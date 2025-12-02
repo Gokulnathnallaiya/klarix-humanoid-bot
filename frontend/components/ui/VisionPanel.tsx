@@ -1,0 +1,286 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { Sparkles, Send, Loader2, Eye, AlertCircle, Lightbulb, Box, MapPin, Shield, Zap } from 'lucide-react'
+import { tts } from '@/lib/speechServices'
+import { API_CONFIG } from '@/lib/config'
+
+interface VisionPanelProps {
+  isConnected: boolean
+  className?: string
+}
+
+interface AnalysisResult {
+  success: boolean
+  analysis: string
+  timestamp: string
+  model?: string
+  error?: string
+}
+
+export default function VisionPanel({ isConnected, className = '' }: VisionPanelProps) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const analyzeScene = useCallback(async () => {
+    if (!isConnected) return
+
+    setIsAnalyzing(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/vision/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.detail || 'Analysis failed')
+      }
+
+      const result = await response.json()
+      setAnalysis(result)
+
+      // Speak the analysis result
+      if (result.success && result.analysis) {
+        const cleanText = result.analysis.replace(/[^\w\s.,!?'-]/g, '').trim()
+        await tts.speakAsRobot(cleanText)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Analysis failed')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [isConnected])
+
+  const askQuestion = useCallback(async () => {
+    if (!isConnected || !question.trim()) return
+
+    setIsAnalyzing(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/vision/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question.trim() })
+      })
+
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.detail || 'Query failed')
+      }
+
+      const result = await response.json()
+      setAnalysis(result)
+      setQuestion('')
+
+      // Speak the answer
+      if (result.success && result.analysis) {
+        const cleanText = result.analysis.replace(/[^\w\s.,!?'-]/g, '').trim()
+        await tts.speakAsRobot(cleanText)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Query failed')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [isConnected, question])
+
+  const parseAnalysis = (text: string) => {
+    // Try to parse as JSON first
+    try {
+      const json = JSON.parse(text)
+      return json
+    } catch {
+      // Return as plain text
+      return { raw: text }
+    }
+  }
+
+  const renderAnalysisContent = () => {
+    if (!analysis) return null
+
+    const parsed = parseAnalysis(analysis.analysis)
+
+    if (parsed.raw) {
+      return (
+        <div className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+          {parsed.raw}
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-3">
+        {parsed.objects && (
+          <div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+              <Box className="w-4 h-4" />
+              <span className="text-xs font-semibold">Objects</span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{Array.isArray(parsed.objects) ? parsed.objects.join(', ') : parsed.objects}</p>
+          </div>
+        )}
+
+        {parsed.environment && (
+          <div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+              <MapPin className="w-4 h-4" />
+              <span className="text-xs font-semibold">Environment</span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{parsed.environment}</p>
+          </div>
+        )}
+
+        {parsed.layout && (
+          <div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+              <Eye className="w-4 h-4" />
+              <span className="text-xs font-semibold">Layout</span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{parsed.layout}</p>
+          </div>
+        )}
+
+        {parsed.safety && (
+          <div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+              <Shield className="w-4 h-4" />
+              <span className="text-xs font-semibold">Safety</span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{parsed.safety}</p>
+          </div>
+        )}
+
+        {parsed.actions && (
+          <div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-1">
+              <Zap className="w-4 h-4" />
+              <span className="text-xs font-semibold">Actions</span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{Array.isArray(parsed.actions) ? parsed.actions.join(', ') : parsed.actions}</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm ${className}`}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          AI Vision (GPT-4o)
+        </h2>
+
+        <button
+          onClick={analyzeScene}
+          disabled={!isConnected || isAnalyzing}
+          className="px-3 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors
+            disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
+        >
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Analyzing...
+            </>
+          ) : (
+            <>
+              <Eye className="w-3 h-3" />
+              Analyze Scene
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Question Input */}
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && askQuestion()}
+          placeholder="Ask about what the robot sees..."
+          disabled={!isConnected || isAnalyzing}
+          className="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg
+            text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <button
+          onClick={askQuestion}
+          disabled={!isConnected || isAnalyzing || !question.trim()}
+          className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Quick Questions */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {['What objects are visible?', 'Is the path clear?', 'Describe the room'].map((q) => (
+          <button
+            key={q}
+            onClick={() => { setQuestion(q); }}
+            disabled={!isConnected}
+            className="px-2 py-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700
+              text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700
+              rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+          >
+            <Lightbulb className="w-3 h-3" />
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
+            <div>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+              {error.includes('Azure OpenAI') && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Configure credentials in backend/.env file
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Results */}
+      {analysis && (
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {new Date(analysis.timestamp).toLocaleTimeString()}
+            </span>
+            {analysis.model && (
+              <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded">
+                {analysis.model}
+              </span>
+            )}
+          </div>
+          {renderAnalysisContent()}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!analysis && !error && !isAnalyzing && (
+        <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+          <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Click "Analyze Scene" to see AI insights</p>
+          <p className="text-xs mt-1">Or ask a question about what the robot sees</p>
+        </div>
+      )}
+    </div>
+  )
+}
